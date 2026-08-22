@@ -76,3 +76,11 @@ No Linux/Mac
 ```bash
 source venv/bin/activate
 ```
+
+## 👥 Colaboradores
+### Equipe de desenvolvimento responsável pela construção da plataforma:
+
+*   **Pedro Henrique**
+*   **Gustavo Belizio**
+*   **Maria Kamily**
+*   **Mateus Roseno**
