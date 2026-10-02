@@ -1,0 +1,30 @@
+{
+  "_aviso": "TEMPLATE - Copie este arquivo para users_mock.json (que é gitignored) e ajuste as credenciais da equipe antes de rodar o login.",
+  "users": [
+    {
+      "nome": "Pedro Henrique",
+      "email": "pedro.henrique@idade.digital",
+      "senha": "senha-pedro-123"
+    },
+    {
+      "nome": "Gustavo Belizio",
+      "email": "gustavo.belizio@idade.digital",
+      "senha": "senha-gustavo-123"
+    },
+    {
+      "nome": "Maria Kamily",
+      "email": "maria.kamily@idade.digital",
+      "senha": "senha-maria-123"
+    },
+    {
+      "nome": "Mateus Roseno",
+      "email": "mateus.roseno@idade.digital",
+      "senha": "senha-mateus-123"
+    },
+    {
+      "nome": "Ana Souza",
+      "email": "ana.souza@idade.digital",
+      "senha": "senha-ana-123"
+    }
+  ]
+}
