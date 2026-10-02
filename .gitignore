@@ -2,3 +2,7 @@ frontend/node_modules/
 backend/venv/
 __pycache__/
 .env
+
+# Credenciais mock de autenticação (não versionar)
+frontend/src/users_mock.json
+backend/src/users_mock.json
