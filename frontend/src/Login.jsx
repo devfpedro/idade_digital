@@ -83,7 +83,7 @@ function Login() {
             className="btn-outline"
             onClick={acaoIndisponivel("Esqueceu a senha?")}
           >
-            ENTRAR
+            CADASTRAR
           </button>
         </div>
 
@@ -151,7 +151,7 @@ function Login() {
               />
             </div>
             <button type="submit" className="btn-solid">
-              CADASTRAR
+              ENTRAR
             </button>
           </form>
 
