@@ -108,7 +108,7 @@ chmod +x start.sh
 git clone https://github.com/devfpedro/idade_digital.git
 cd idade_digital
 copy frontend\src\users_mock.json.example frontend\src\users_mock.json
-start.bat
+.\start.bat
 ```
 
 ### O que o script faz automaticamente?
