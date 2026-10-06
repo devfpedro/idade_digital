@@ -75,10 +75,10 @@ function Home() {
             title={sessao?.usuario || "Perfil"}
             onClick={() => setMenuAberto((aberto) => !aberto)}
           >
-            {(sessao?.usuario || "U")
-              .trim()
-              .charAt(0)
-              .toUpperCase()}
+            <span className="perfil-inicial" aria-hidden="true">
+              {(sessao?.usuario || "U").trim().charAt(0).toUpperCase()}
+            </span>
+            Meu menu
           </button>
 
           {menuAberto && (
@@ -109,12 +109,14 @@ function Home() {
 
         <section className="secoes" aria-label="Seções da plataforma">
           <button type="button" className="cartao-secao" onClick={secaoFutura("Cursos")}>
+            <span className="selo-breve">Em breve</span>
             <span className="cartao-icone" aria-hidden="true">🎓</span>
             <span className="cartao-titulo">Cursos</span>
             <span className="cartao-descricao">Aprenda a usar computador e celular no seu ritmo</span>
           </button>
 
           <button type="button" className="cartao-secao" onClick={secaoFutura("Informações")}>
+            <span className="selo-breve">Em breve</span>
             <span className="cartao-icone" aria-hidden="true">ℹ️</span>
             <span className="cartao-titulo">Informações</span>
             <span className="cartao-descricao">Dicas de segurança e proteção contra golpes online</span>
@@ -122,9 +124,7 @@ function Home() {
         </section>
 
         <p className="home-info">
-          Por segurança, sua sessão expira após {descreverPeriodoSessao()} sem
-          atividade. Toques, cliques e digitação renovam esse tempo
-          automaticamente — você só entra de novo se ficar esse período sem
+          Por segurança, você sai sozinho após {descreverPeriodoSessao()} sem
           usar a plataforma.
         </p>
 

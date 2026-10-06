@@ -18,18 +18,18 @@ function Login() {
   const navigate = useNavigate();
   const [erro, setErro] = useState("");
   const [mensagemSuporte, setMensagemSuporte] = useState("");
+  const [mostrarSenha, setMostrarSenha] = useState(false);
 
   function handleSubmit(e) {
     e.preventDefault();
     setErro("");
 
-    const nome = e.target.nome.value.trim();
     const email = e.target.email.value.trim().toLowerCase();
     const senha = e.target.senha.value;
 
     // Validações básicas (segurança: não confiar só no atributo required)
-    if (!nome || !email || !senha) {
-      setErro("Preencha todos os campos antes de entrar.");
+    if (!email || !senha) {
+      setErro("Preencha o e-mail e a senha para entrar.");
       return;
     }
 
@@ -76,19 +76,19 @@ function Login() {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-left">
-          <h2>Bem-vindo de volta</h2>
-          <p>Acesse sua conta agora</p>
+          <h2>Primeira vez aqui?</h2>
+          <p>Crie sua conta e comece a aprender no seu ritmo.</p>
           <button
             type="button"
             className="btn-outline"
-            onClick={acaoIndisponivel("Esqueceu a senha?")}
+            onClick={acaoIndisponivel("Criar conta")}
           >
-            CADASTRAR
+            CRIAR CONTA
           </button>
         </div>
 
         <div className="auth-right">
-          <h2>CRIE SUA CONTA</h2>
+          <h2>Entre na sua conta</h2>
           {erro && (
             <p className="form-mensagem-erro" role="alert">
               {erro}
@@ -103,52 +103,47 @@ function Login() {
             </p>
           )}
           <form onSubmit={handleSubmit} noValidate>
+            <label className="campo-rotulo" htmlFor="campo-email">Seu e-mail</label>
             <div className="input-group">
               <span className="icon">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="9" cy="8" r="4" />
-                  <path d="M2 21c0-4 3-7 7-7s7 3 7 7" />
-                  <line x1="19" y1="8" x2="19" y2="14" />
-                  <line x1="16" y1="11" x2="22" y2="11" />
-                </svg>
-              </span>
-              <input
-                type="text"
-                name="nome"
-                placeholder="NOME"
-                autoComplete="name"
-                required
-              />
-            </div>
-            <div className="input-group">
-              <span className="icon">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="2" y="4" width="20" height="16" rx="2" />
                   <path d="M2 6l10 7 10-7" />
                 </svg>
               </span>
               <input
+                id="campo-email"
                 type="email"
                 name="email"
-                placeholder="E-MAIL"
+                placeholder="exemplo@email.com"
                 autoComplete="email"
                 required
               />
             </div>
+            <label className="campo-rotulo" htmlFor="campo-senha">Sua senha</label>
             <div className="input-group">
               <span className="icon">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="4" y="11" width="16" height="10" rx="2" />
                   <path d="M8 11V7a4 4 0 018 0v4" />
                 </svg>
               </span>
               <input
-                type="password"
+                id="campo-senha"
+                type={mostrarSenha ? "text" : "password"}
                 name="senha"
-                placeholder="SENHA"
+                placeholder="Digite sua senha"
                 autoComplete="current-password"
                 required
               />
+              <button
+                type="button"
+                className="btn-olho"
+                aria-pressed={mostrarSenha}
+                onClick={() => setMostrarSenha((v) => !v)}
+              >
+                {mostrarSenha ? "Esconder" : "Mostrar"}
+              </button>
             </div>
             <button type="submit" className="btn-solid">
               ENTRAR
@@ -185,10 +180,11 @@ function Login() {
           title="Suporte/Contato"
           onClick={abrirSuporte}
         >
-          <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true">
             <path d="M19.4 13a7.6 7.6 0 000-2l2.1-1.6a.5.5 0 00.1-.7l-2-3.4a.5.5 0 00-.6-.2l-2.5 1a7.6 7.6 0 00-1.7-1L14.4 2.4a.5.5 0 00-.5-.4h-4a.5.5 0 00-.5.4L9 5a7.6 7.6 0 00-1.7 1l-2.5-1a.5.5 0 00-.6.2l-2 3.4a.5.5 0 00.1.7L4.6 11a7.6 7.6 0 000 2l-2.1 1.6a.5.5 0 00-.1.7l2 3.4c.1.2.4.3.6.2l2.5-1c.5.4 1.1.7 1.7 1l.4 2.6c0 .2.2.4.5.4h4c.2 0 .5-.2.5-.4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1c.2.1.5 0 .6-.2l2-3.4a.5.5 0 00-.1-.7L19.4 13z" />
             <circle cx="12" cy="12" r="3" fill="#ffffff" />
           </svg>
+          Preciso de ajuda
         </button>
       </div>
 
