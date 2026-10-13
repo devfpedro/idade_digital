@@ -1,0 +1,99 @@
+.item-menu {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 19px;
+    color: #333;
+    text-align: left;
+    cursor: pointer;
+}
+
+.item-menu:hover {
+    background: #e7f0fe;
+}
+
+.item-sair {
+    margin-top: 4px;
+    padding-top: 14px;
+    border-top: 1px solid #e5e7eb;
+    border-radius: 0 0 8px 8px;
+    color: #b91c1c;
+}
+
+.item-sair:hover {
+    background-color: #fef2f2;
+    color: #991b1b;
+}
+
+.span-perfil {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 54px;
+    padding: 6px 20px 6px 8px;
+    border: 2px solid #1e40af;
+    border-radius: 30px;
+    background-color: #2563eb;
+    color: #ffffff;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.16);
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.span-perfil:hover {
+    background-color: #1d4ed8;
+}
+
+.span-perfil:focus-visible,
+.item-menu:focus-visible {
+    outline: 3px solid #f59e0b;
+    outline-offset: 3px;
+}
+
+.perfil-inicial {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    color: #1d4ed8;
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.myHeader {
+    background-color: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 18px 28px;
+    padding: 0.75rem 0;
+    box-shadow: 0 3px 14px rgba(15, 23, 42, 0.15);
+    z-index: 1030;
+}
+
+.brand-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background-color: #2563eb;
+}
+
+.nav-dropdown {
+    position: relative;
+}
