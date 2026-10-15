@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import Login from "./Login";
-import Home from "./Home";
+import Login from "./views/Login";
+import Home from "./views/Home";
+import Cursos from "./views/Cursos";
+import Informacoes from "./views/Informacoes";
 import {
   sessaoValida,
   iniciarVigiaSessao,
   EVENTO_SESSAO_EXPIRADA,
-} from "./auth";
-import { ToastContext } from "./toast";
+} from "./services/auth";
+import { ToastContext } from "./services/toast";
 import "./App.css";
 
 let contadorToasts = 0;
@@ -103,6 +105,18 @@ function AppInterno() {
         <Route
           path="/login"
           element={sessaoValida() ? <Navigate to="/" replace /> : <Login />}
+        />
+        <Route
+          path="/cursos"
+          element={
+            sessaoValida() ? <Cursos /> : <Navigate to="/login" replace />
+          }
+        />
+        <Route
+          path="/informacoes"
+          element={
+            sessaoValida() ? <Informacoes /> : <Navigate to="/login" replace />
+          }
         />
       </Routes>
     </ToastContext.Provider>

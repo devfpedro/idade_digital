@@ -2,17 +2,18 @@ import { Button, Container, Nav, Navbar, NavDropdown, } from "react-bootstrap"
 import './Header.css'
 import { encerrarSessao, obterSessao } from "../services/auth"
 import { useToast } from "../services/toast"
-import { Navigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 
 import img from '../assets/react.svg'
 
 const Header = () => {
   const sessao = obterSessao()
   const mostrarToast = useToast();
+  const navigate = useNavigate();
 
   function handleLogout() {
     encerrarSessao();
-    Navigate("/login");
+    navigate("/login");
   }
 
   function itemMenu(nomeItem) {

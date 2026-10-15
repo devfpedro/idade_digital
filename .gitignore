@@ -1,8 +1,13 @@
 frontend/node_modules/
 backend/venv/
 __pycache__/
+.freebuff/
 .env
 
 # Credenciais mock de autenticação (não versionar)
 frontend/src/users_mock.json
 backend/src/users_mock.json
+
+# Logs gerados pelo start.bat (backend Flask em background)
+backend/flask_out.log
+backend/flask_err.log
