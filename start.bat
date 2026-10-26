@@ -1,16 +1,14 @@
 @echo off
-REM Idade Digital - execucao unificada (backend Flask + frontend Vite)
-REM Uso: start.bat  (ou: duplo clique no Explorer)
 setlocal EnableDelayedExpansion
 
 set RAIZ=%~dp0
 set PID_BACKEND=
 set PID_FRONTEND=
 
-if not exist "%RAIZ%frontend\src\users_mock.json" (
-  if exist "%RAIZ%frontend\src\users_mock.json.example" (
-    echo [start] Criando src/users_mock.json a partir do .example...
-    copy /y "%RAIZ%frontend\src\users_mock.json.example" "%RAIZ%frontend\src\users_mock.json" >nul
+if not exist "%RAIZ%backend\db\users_mock.json" (
+  if exist "%RAIZ%backend\db\users_mock.json.example" (
+    echo [start] Criando backend/db/users_mock.json a partir do .example...
+    copy /y "%RAIZ%backend\db\users_mock.json.example" "%RAIZ%backend\db\users_mock.json" >nul
   )
 )
 
@@ -101,6 +99,20 @@ if not exist "%PYTHON%" (
 
 echo [start] Instalando/verificando dependencias do backend ^(pip^)...
 "%PYTHON%" -m pip install -q -r "%RAIZ%backend\src\requeriments.txt"
+
+REM Voz neural da leitura (Piper): baixa o modelo na 1a vez; sem ele, a leitura
+REM usa a voz do navegador.
+"%PYTHON%" "%RAIZ%backend\src\baixar_voz.py"
+if errorlevel 1 echo [start] AVISO: voz natural indisponivel; a leitura usara a voz do navegador.
+
+REM Banco PostgreSQL: cria backend\.env (se faltar), esquema, dados iniciais e
+REM usuarios. Se o banco estiver inacessivel, apenas avisa e segue adiante.
+echo [start] Preparando o banco de dados PostgreSQL...
+"%PYTHON%" "%RAIZ%backend\src\db_init.py"
+if errorlevel 1 (
+  echo [start] AVISO: banco indisponivel. O frontend abre, mas login e cursos
+  echo [start]        nao funcionarao ate o PostgreSQL ser configurado.
+)
 
 REM ---------- 3. Sobe o Flask em background ----------
 set FLASK_DEBUG=false

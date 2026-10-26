@@ -7,7 +7,7 @@
     border: none;
     border-radius: 8px;
     padding: 12px 14px;
-    font-size: 19px;
+    font-size: 1.056rem;
     color: #333;
     text-align: left;
     cursor: pointer;
@@ -96,4 +96,42 @@
 
 .nav-dropdown {
     position: relative;
+}
+.link-pular {
+    position: absolute;
+    left: 0.5rem;
+    top: -4rem;
+    z-index: 2000;
+    padding: 0.75rem 1.25rem;
+    background: #fff;
+    color: #0f172a;
+    font-weight: 700;
+    border: 3px solid #f59e0b;
+    border-radius: 8px;
+}
+
+.link-pular:focus {
+    top: 0.5rem;
+}
+
+.myHeader .nav-link {
+    color: #e2e8f0;
+}
+
+.myHeader .nav-link.active {
+    color: #ffffff;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 6px;
+}
+
+.tempo-sessao {
+    font-size: 1rem;
+    color: #0f172a;
+    white-space: normal;
+}
+
+.tempo-sessao small {
+    color: #475569;
+    margin-top: 0.2rem;
 }

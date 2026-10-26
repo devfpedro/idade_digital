@@ -1,132 +1,131 @@
-import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { obterSessao, encerrarSessao, TEMPO_SESSAO_MS } from "../services/auth";
-import { useToast } from "../services/toast";
+import { Link } from "react-router-dom";
+import Header from "../components/Header";
+import Rodape from "../components/Rodape";
+import { obterSessao } from "../services/auth";
 import "./Home.css";
 
-function descreverPeriodoSessao() {
-  if (TEMPO_SESSAO_MS < 60000) {
-    return `${Math.round(TEMPO_SESSAO_MS / 1000)} segundos`;
-  }
-  const minutos = Math.round(TEMPO_SESSAO_MS / 60000);
-  return minutos === 1 ? "1 minuto" : `${minutos} minutos`;
-}
+const PASSOS = [
+  {
+    icone: "🎓",
+    titulo: "Escolha um curso",
+    texto: (
+      <>
+        Em <Link to="/cursos">“Cursos”</Link> há trilhas sobre celular, WhatsApp, internet e
+        computador.
+      </>
+    ),
+  },
+  {
+    icone: "🧩",
+    titulo: "Avance por módulos",
+    texto: (
+      <>
+        Cada curso é dividido em “módulos”. Um módulo libera o próximo
+        quando você termina, e a plataforma percebe sozinha e guarda seu progresso.
+      </>
+    ),
+  },
+  {
+    icone: "🛡️",
+    titulo: "Aprenda a se proteger",
+    texto: (
+      <>
+        Em <Link to="/informacoes">“Informações”</Link> você reconhece golpes e descobre como
+        evitá-los.
+      </>
+    ),
+  },
+  {
+    icone: "♿",
+    titulo: "Use a acessibilidade",
+    texto: (
+      <>
+        No topo de todas as páginas: letra maior, alto contraste, cores para daltonismo e leitura
+        em voz alta.
+      </>
+    ),
+  },
+];
 
 function Home() {
-  const navigate = useNavigate();
-  const mostrarToast = useToast();
   const sessao = obterSessao();
-  const [menuAberto, setMenuAberto] = useState(false);
-  const menuRef = useRef(null);
-
-  // Sessão sumiu (expirada em outra aba/storage limpo): volta para o login
-  useEffect(() => {
-    if (!sessao) navigate("/login", { replace: true });
-  }, [sessao, navigate]);
-
-  // Fecha o dropdown ao clicar fora ou pressionar Esc
-  useEffect(() => {
-    if (!menuAberto) return undefined;
-
-    function aoClicarFora(e) {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuAberto(false);
-      }
-    }
-    function aoPressionarEsc(e) {
-      if (e.key === "Escape") setMenuAberto(false);
-    }
-
-    document.addEventListener("mousedown", aoClicarFora);
-    document.addEventListener("keydown", aoPressionarEsc);
-    return () => {
-      document.removeEventListener("mousedown", aoClicarFora);
-      document.removeEventListener("keydown", aoPressionarEsc);
-    };
-  }, [menuAberto]);
-
-  function handleLogout() {
-    encerrarSessao();
-    navigate("/login");
-  }
-
-  function itemMenu(nomeItem) {
-    return () => {
-      setMenuAberto(false);
-      mostrarToast(`${nomeItem}: funcionalidade em desenvolvimento.`, "info");
-    };
-  }
 
   return (
     <div className="home-container">
-      <header className="home-topo">
-        <div className="perfil-wrapper" ref={menuRef}>
-          <button
-            type="button"
-            className="btn-perfil"
-            aria-label="Abrir menu do perfil"
-            aria-haspopup="menu"
-            aria-expanded={menuAberto}
-            title={sessao?.usuario || "Perfil"}
-            onClick={() => setMenuAberto((aberto) => !aberto)}
-          >
-            <span className="perfil-inicial" aria-hidden="true">
-              {(sessao?.usuario || "U").trim().charAt(0).toUpperCase()}
-            </span>
-            Meu menu
-          </button>
+      <Header />
 
-          {menuAberto && (
-            <nav className="menu-perfil" role="menu" aria-label="Menu do perfil">
-              <button type="button" role="menuitem" className="item-menu" onClick={itemMenu("Informações Pessoais")}>
-                <span aria-hidden="true">👤</span> Informações Pessoais
-              </button>
-              <button type="button" role="menuitem" className="item-menu" onClick={itemMenu("Suporte")}>
-                <span aria-hidden="true">🛟</span> Suporte
-              </button>
-              <button type="button" role="menuitem" className="item-menu" onClick={itemMenu("Notificações")}>
-                <span aria-hidden="true">🔔</span> Notificações
-              </button>
-              <button type="button" role="menuitem" className="item-menu item-sair" onClick={handleLogout}>
-                <span aria-hidden="true">🚪</span> Sair
-              </button>
-            </nav>
-          )}
-        </div>
-      </header>
+      <main id="conteudo-principal" tabIndex={-1} className="home-principal">
+        <section className="home-boasvindas" aria-labelledby="titulo-boasvindas">
+          <div className="boasvindas-texto">
+            <h1 id="titulo-boasvindas">Bem-vindo(a), {sessao?.usuario || "usuário"}!</h1>
+            <p className="home-frase">
+              Que bom te ver por aqui. Escolha uma opção ao lado para continuar
+              aprendendo e navegando com segurança.
+            </p>
+          </div>
 
-      <main className="home-card">
-        <h1>Bem-vindo(a), {sessao?.usuario || "usuário"}!</h1>
-        <p className="home-frase">
-          Que bom te ver por aqui. Escolha uma opção abaixo para continuar
-          aprendendo e navegando com segurança.
-        </p>
+          <div className="secoes" role="navigation" aria-label="Seções da plataforma">
+            <Link className="cartao-secao" to="/cursos">
+              <span className="cartao-icone" aria-hidden="true">🎓</span>
+              <span className="cartao-titulo">Cursos</span>
+              <span className="cartao-descricao">Aprenda a usar computador e celular no seu ritmo</span>
+            </Link>
 
-        <section className="secoes" aria-label="Seções da plataforma">
-          <Link className="cartao-secao" to='/cursos'>
-            <span className="selo-breve">Em breve</span>
-            <span className="cartao-icone" aria-hidden="true">🎓</span>
-            <span className="cartao-titulo">Cursos</span>
-            <span className="cartao-descricao">Aprenda a usar computador e celular no seu ritmo</span>
-          </Link>
-
-          <Link className="cartao-secao" to='/informacoes'>
-            <span className="selo-breve">Em breve</span>
-            <span className="cartao-icone" aria-hidden="true">ℹ️</span>
-            <span className="cartao-titulo">Informações</span>
-            <span className="cartao-descricao">Dicas de segurança e proteção contra golpes online</span>
-          </Link>
+            <Link className="cartao-secao" to="/informacoes">
+              <span className="cartao-icone" aria-hidden="true">ℹ️</span>
+              <span className="cartao-titulo">Informações</span>
+              <span className="cartao-descricao">Dicas de segurança e proteção contra golpes online</span>
+            </Link>
+          </div>
         </section>
 
-        <p className="home-info">
-          Por segurança, você sai sozinho após {descreverPeriodoSessao()} sem
-          usar a plataforma.
-        </p>
+        <div className="home-duas-colunas">
+          <section className="home-bloco" aria-labelledby="sobre-plataforma">
+            <h2 id="sobre-plataforma">O que é o Idade Digital?</h2>
+            <p>
+              O Idade Digital é uma plataforma para aprender a usar o computador e o celular
+              com calma, no seu ritmo e com segurança. Aqui você encontra cursos organizados em
+              módulos e dicas para se proteger de golpes na internet.
+            </p>
+          </section>
 
-        <button type="button" className="btn-logout" onClick={handleLogout}>
-          SAIR
-        </button>
+          <section className="home-bloco" aria-labelledby="para-quem">
+            <h2 id="para-quem">Para quem é</h2>
+            <p>
+              Foi pensado para pessoas com mais de 60 anos que querem usar a tecnologia no dia
+              a dia com autonomia. Familiares, cuidadores e educadores também podem usar a
+              plataforma para aprender, além de ajudar a pessoa idosa.
+            </p>
+          </section>
+        </div>
+
+        <section className="home-passos-secao" aria-labelledby="como-funciona">
+          <h2 id="como-funciona">Como funciona</h2>
+          <ol className="home-passos">
+            {PASSOS.map((passo, i) => (
+              <li key={passo.titulo} className="passo">
+                <span className="passo-numero" aria-hidden="true">{i + 1}</span>
+                <span className="passo-icone" aria-hidden="true">{passo.icone}</span>
+                <strong className="passo-titulo">{passo.titulo}</strong>
+                <span className="passo-texto">{passo.texto}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section className="home-faixa" aria-labelledby="quem-faz">
+          <div>
+            <h2 id="quem-faz">Quem desenvolve</h2>
+            <p>
+              Projeto de extensão do IFPB Campus Guarabira, do curso de Tecnologia em Sistemas
+              para Internet, em parceria com o Centro de Convivência da Pessoa Idosa de Guarabira.
+            </p>
+          </div>
+          <Link to="/equipe" className="faixa-link">Conheça a equipe e os parceiros →</Link>
+        </section>
       </main>
+
+      <Rodape />
     </div>
   );
 }

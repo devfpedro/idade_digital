@@ -1,14 +1,31 @@
 import os
+import threading
 
-from flask import Flask, jsonify
+import psycopg
+from flask import Flask, g
 from flask_cors import CORS
+from werkzeug.exceptions import HTTPException
+
+import config
 from helpers.database import getConexao
-from models.curso import Curso
+from routes import (
+    auth,
+    cursos,
+    equipe,
+    gestao_cursos,
+    informacoes,
+    modulos,
+    uploads,
+    usuarios,
+    voz,
+)
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = config.SECRET_KEY
+app.json.ensure_ascii = False
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # imagens de até 4 MB + cabeçalhos
 
 
-# Origens autorizadas a chamar a API (frontend Vite em desenvolvimento)
 CORS_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -16,12 +33,24 @@ CORS_ORIGINS = [
     "http://127.0.0.1:4173",
 ]
 
-# CORS: aceita requisições do frontend Vite (dev em 5173/4173), com cookies
 CORS(
     app,
     resources={r"/*": {"origins": CORS_ORIGINS}},
     supports_credentials=True,
 )
+
+for modulo in (
+    auth,
+    cursos,
+    equipe,
+    gestao_cursos,
+    informacoes,
+    modulos,
+    uploads,
+    usuarios,
+    voz,
+):
+    app.register_blueprint(modulo.bp)
 
 
 @app.route("/status")
@@ -31,179 +60,85 @@ def status():
 
 @app.route("/health")
 def health():
-    return {"version": "1.0.0"}, 200
+    try:
+        with getConexao() as conexao:
+            conexao.execute("SELECT 1")
+        banco = "ok"
+    except psycopg.Error:
+        banco = "indisponivel"
+    return {"version": "1.0.0", "database": banco}, 200 if banco == "ok" else 503
+
+
+# Limita as requisições em andamento: cada uma abre uma conexão com o PostgreSQL
+# (limite padrão de ~100); acima disso as demais esperam na fila em vez de falhar.
+MAX_REQUISICOES_SIMULTANEAS = int(os.getenv("MAX_REQUISICOES_SIMULTANEAS", "40"))
+_fila = threading.BoundedSemaphore(MAX_REQUISICOES_SIMULTANEAS)
+
+
+@app.before_request
+def entrar_na_fila():
+    g.na_fila = _fila.acquire(timeout=15)
+    if not g.na_fila:
+        return {"erro": "Servidor ocupado. Tente novamente em instantes."}, 503
+    return None
+
+
+@app.teardown_request
+def sair_da_fila(_erro):
+    if getattr(g, "na_fila", False):
+        _fila.release()
+        g.na_fila = False
+
+
+@app.errorhandler(psycopg.errors.UniqueViolation)
+def duplicado(erro):
+    """Corrida entre duas gravações iguais: a checagem prévia passou nas duas, o banco barrou uma."""
+    return {"erro": "Já existe um cadastro com esses dados."}, 409
+
+
+@app.errorhandler(psycopg.OperationalError)
+def banco_indisponivel(erro):
+    app.logger.error("Banco de dados indisponível: %s", erro)
+    return {
+        "erro": "Serviço temporariamente indisponível. Tente novamente em instantes."
+    }, 503
+
+
+@app.errorhandler(psycopg.Error)
+def erro_de_banco(erro):
+    app.logger.exception("Erro de banco de dados")
+    return {"erro": "Erro interno ao acessar os dados."}, 500
+
+
+MENSAGENS_HTTP = {
+    400: "Requisição inválida.",
+    404: "Recurso não encontrado.",
+    405: "Método não permitido para este recurso.",
+    413: "O arquivo enviado é grande demais.",
+    415: "Formato de conteúdo não suportado.",
+}
+
+
+@app.errorhandler(HTTPException)
+def erro_http(erro):
+    return {
+        "erro": MENSAGENS_HTTP.get(erro.code, "Não foi possível concluir a requisição.")
+    }, erro.code
 
 
 def variavel_ambiente_ligada(nome, padrao="true"):
-    """Lê uma flag de ambiente do tipo liga/desliga (padrão: ligada)."""
     return os.getenv(nome, padrao).strip().lower() != "false"
-
-def conversao(dados):
-    return Curso( dados[0],dados[1],dados[2],dados[3],dados[4])
-    
-
-@app.get("/cursos")
-def getCursos ():
-
-    try:
-
-        # 1. Estabelecer a conexão
-        conexao = getConexao()
-        cursor = conexao.cursor()
-        cursor.execute("SELECT * FROM cursos;")
-        data = cursor.fetchall()
-
-        cursos = [conversao(dado) for dado in data] 
-
-        return cursos, 200
-
-    except Exception as erro:
-        print("Erro ao buscar cursos:", erro)
-        return []
-    finally:
-        if conexao:
-            conexao.close()
-
-@app.post("/cursos")
-def postCursos():
-    try:
-        # 1. Estabelecer a conexão
-        conexao = getConexao()
-        cursor = conexao.cursor()
-        cursor.execute("INSERT INTO cursos (nome, descricao, categoria, imagem) VALUES (%s, %s, %s, %s);", ("Nome", "Descrição", "Categoria", "Imagem"))
-        conexao.commit()
-
-        return {"message": "Curso inserido com sucesso"}, 201
-
-    except Exception as erro:
-        print("Erro ao inserir curso:", erro)
-        return {"message": "Erro ao inserir curso"}, 500
-    finally:
-        if conexao:
-            conexao.close()
-
-@app.put("/cursos")
-def putCursos():
-    try:
-        # 1. Estabelecer a conexão
-        conexao = getConexao()
-        cursor = conexao.cursor()
-        cursor.execute("UPDATE cursos SET nome = %s, descricao = %s, categoria = %s, imagem = %s WHERE id = %s;", ("Novo Nome", "Nova Descrição", "Nova Categoria", "Nova Imagem", 1))
-        conexao.commit()
-
-        return {"message": "Curso atualizado com sucesso"}, 200
-
-    except Exception as erro:
-        print("Erro ao atualizar curso:", erro)
-        return {"message": "Erro ao atualizar curso"}, 500
-    finally:
-        if conexao:
-            conexao.close()
-
-@app.delete("/cursos")
-def deleteCursos():
-    try:
-        # 1. Estabelecer a conexão
-        conexao = getConexao()
-        cursor = conexao.cursor()
-        cursor.execute("DELETE FROM cursos WHERE id = %s;", (1,))
-        conexao.commit()
-
-        return {"message": "Curso deletado com sucesso"}, 200
-
-    except Exception as erro:
-        print("Erro ao deletar curso:", erro)
-        return {"message": "Erro ao deletar curso"}, 500    
-    finally:    
-        if conexao:
-            conexao.close()
-            
-@app.get("/informacoes")
-def getInfomacoes ():
-    try:
-        # 1. Estabelecer a conexão
-        conexao = getConexao()
-        cursor = conexao.cursor()
-        cursor.execute("SELECT * FROM informacoes;")
-        data = cursor.fetchall()
-
-        return data, 200
-
-    except Exception as erro:
-        print("Erro ao buscar informações:", erro)
-        return []
-    finally:
-        if conexao:
-            conexao.close()
-
-@app.post("/informacoes")
-def postInformacoes ():
-    try:
-        # 1. Estabelecer a conexão
-        conexao = getConexao()
-        cursor = conexao.cursor()
-        cursor.execute("INSERT INTO informacoes (nome, descricao, imagem) VALUES (%s, %s, %s);", ("Nome", "Descrição", "Imagem"))
-        conexao.commit()
-
-        return {"message": "Informações inseridas com sucesso"}, 201
-
-    except Exception as erro:
-        print("Erro ao inserir informações:", erro)
-        return {"message": "Erro ao inserir informações"}, 500
-    finally:
-        if conexao:
-            conexao.close()
-
-@app.put("/informacoes")
-def putInformacoes ():
-    try:
-        # 1. Estabelecer a conexão
-        conexao = getConexao()
-        cursor = conexao.cursor()
-        cursor.execute("UPDATE informacoes SET nome = %s, descricao = %s, imagem = %s WHERE id = %s;", ("Novo Nome", "Nova Descrição", "Nova Imagem", 1))
-        conexao.commit()
-
-        return {"message": "Informações atualizadas com sucesso"}, 200
-
-    except Exception as erro:
-        print("Erro ao atualizar informações:", erro)
-        return {"message": "Erro ao atualizar informações"}, 500
-    finally:
-        if conexao:
-            conexao.close()
-
-@app.delete("/informacoes")
-def deleteInformacoes ():
-    try:
-        # 1. Estabelecer a conexão
-        conexao = getConexao()
-        cursor = conexao.cursor()
-        cursor.execute("DELETE FROM informacoes WHERE id = %s;", (1,))
-        conexao.commit()
-
-        return {"message": "Informações deletadas com sucesso"}, 200
-
-    except Exception as erro:
-        print("Erro ao deletar informações:", erro)
-        return {"message": "Erro ao deletar informações"}, 500
-    finally:
-        if conexao:
-            conexao.close()
-    
 
 
 def main(arg=None):
-    """Inicia o servidor Flask (usado por start.sh / start.bat).
-
-
-
-    FLASK_DEBUG=false desliga o modo debug e FLASK_RELOADER=false desliga o
-    reloader (o start.sh usa isso para não deixar processos órfãos na porta).
-    """
+    if config.SECRET_KEY_EFEMERA:
+        app.logger.warning(
+            "SECRET_KEY não definida em backend/.env: logins serão invalidados ao reiniciar."
+        )
     app.run(
         host="127.0.0.1",
         port=5000,
-        debug=variavel_ambiente_ligada("FLASK_DEBUG"),
+        debug=variavel_ambiente_ligada("FLASK_DEBUG", "false"),
         use_reloader=variavel_ambiente_ligada("FLASK_RELOADER"),
     )
 

@@ -1,12 +1,22 @@
 import { useCallback, useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import Login from "./views/Login";
 import Home from "./views/Home";
 import Cursos from "./views/Cursos";
 import Informacoes from "./views/Informacoes";
+import CursoDetalhe from "./views/CursoDetalhe";
+import Equipe from "./views/Equipe";
+import ModuloDetalhe from "./views/ModuloDetalhe";
+import Usuarios from "./views/Usuarios";
+import { PAPEIS_GESTAO } from "./services/papeis";
+import AvisoSessao from "./components/AvisoSessao";
+import RotaProtegida from "./components/RotaProtegida";
+import AcessibilidadeProvider from "./components/AcessibilidadeProvider";
 import {
   sessaoValida,
   iniciarVigiaSessao,
+  lerAvisoLogout,
+  limparAvisoLogout,
   EVENTO_SESSAO_EXPIRADA,
 } from "./services/auth";
 import { ToastContext } from "./services/toast";
@@ -14,13 +24,34 @@ import "./App.css";
 
 let contadorToasts = 0;
 
+const TITULOS = {
+  "/": "Início",
+  "/login": "Entrar",
+  "/cursos": "Cursos",
+  "/informacoes": "Informações",
+  "/equipe": "Equipe e Parceiros",
+  "/usuarios": "Usuários",
+};
+
+function useAcessoDePagina() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const titulo = pathname.includes("/modulos/")
+      ? "Módulo"
+      : pathname.startsWith("/cursos/")
+        ? "Curso"
+        : TITULOS[pathname];
+    document.title = titulo ? `${titulo} | Idade Digital` : "Idade Digital";
+    document.getElementById("conteudo-principal")?.focus({ preventScroll: true });
+  }, [pathname]);
+}
+
 function Toast({ toast, onFechar }) {
   const [saindo, setSaindo] = useState(false);
 
   useEffect(() => {
     if (!toast) return undefined;
 
-    // Animação de saída começa pouco antes da remoção da notificação
     const t1 = setTimeout(
       () => setSaindo(true),
       Math.max(toast.duracao - 300, 0),
@@ -37,8 +68,7 @@ function Toast({ toast, onFechar }) {
   return (
     <div
       className={`toast toast-${toast.tipo}${saindo ? " toast-saindo" : ""}`}
-      role="alert"
-      aria-live="assertive"
+      role={toast.tipo === "erro" ? "alert" : "status"}
     >
       <span className="toast-icone" aria-hidden="true">
         {toast.icone}
@@ -50,6 +80,7 @@ function Toast({ toast, onFechar }) {
 
 function AppInterno() {
   const navigate = useNavigate();
+  useAcessoDePagina();
   const [toasts, setToasts] = useState([]);
 
   const mostrarToast = useCallback(
@@ -65,17 +96,25 @@ function AppInterno() {
     setToasts((atual) => atual.filter((t) => t.id !== id));
   }, []);
 
-  // Sessão expirada: toast no topo central + redirecionamento para /login.
+  // Aviso de sessão encerrada. Se a expiração for percebida ao abrir o site (janela
+  // fechada sem sair), o aviso já está guardado e aparece sobre a tela de entrada.
+  const [aviso, setAviso] = useState(() => {
+    sessaoValida();
+    const guardado = lerAvisoLogout();
+    return guardado ? { motivo: guardado.motivo, redirecionar: false } : null;
+  });
+
+  const fecharAviso = useCallback(() => {
+    if (aviso?.redirecionar) navigate("/login", { replace: true });
+    setAviso(null);
+  }, [aviso, navigate]);
+
   useEffect(() => {
+    limparAvisoLogout();
+
     function aoExpirar(evento) {
-      mostrarToast(
-        evento.detail?.motivo ||
-          "Sua sessão expirou por segurança. Faça login novamente.",
-        "aviso",
-        5000,
-        "⏳",
-      );
-      navigate("/login", { replace: true });
+      limparAvisoLogout();
+      setAviso({ motivo: evento.detail?.motivo || "", redirecionar: true });
     }
 
     window.addEventListener(EVENTO_SESSAO_EXPIRADA, aoExpirar);
@@ -85,7 +124,7 @@ function AppInterno() {
       window.removeEventListener(EVENTO_SESSAO_EXPIRADA, aoExpirar);
       pararVigia();
     };
-  }, [mostrarToast, navigate]);
+  }, []);
 
   return (
     <ToastContext.Provider value={mostrarToast}>
@@ -95,29 +134,28 @@ function AppInterno() {
         ))}
       </div>
 
+      {aviso && <AvisoSessao aviso={aviso} onFechar={fecharAviso} />}
+
       <Routes>
-        <Route
-          path="/"
-          element={
-            sessaoValida() ? <Home /> : <Navigate to="/login" replace />
-          }
-        />
+        <Route path="/" element={<RotaProtegida><Home /></RotaProtegida>} />
         <Route
           path="/login"
           element={sessaoValida() ? <Navigate to="/" replace /> : <Login />}
         />
+        <Route path="/cursos" element={<RotaProtegida><Cursos /></RotaProtegida>} />
+        <Route path="/cursos/:id" element={<RotaProtegida><CursoDetalhe /></RotaProtegida>} />
+        <Route path="/informacoes" element={<RotaProtegida><Informacoes /></RotaProtegida>} />
         <Route
-          path="/cursos"
-          element={
-            sessaoValida() ? <Cursos /> : <Navigate to="/login" replace />
-          }
+          path="/cursos/:id/modulos/:ordem"
+          element={<RotaProtegida><ModuloDetalhe /></RotaProtegida>}
         />
         <Route
-          path="/informacoes"
-          element={
-            sessaoValida() ? <Informacoes /> : <Navigate to="/login" replace />
-          }
+          path="/usuarios"
+          element={<RotaProtegida papeis={PAPEIS_GESTAO}><Usuarios /></RotaProtegida>}
         />
+        <Route path="/equipe" element={<RotaProtegida><Equipe /></RotaProtegida>} />
+        <Route path="/sobre" element={<Navigate to="/equipe" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ToastContext.Provider>
   );
@@ -126,7 +164,9 @@ function AppInterno() {
 function App() {
   return (
     <BrowserRouter>
-      <AppInterno />
+      <AcessibilidadeProvider>
+        <AppInterno />
+      </AcessibilidadeProvider>
     </BrowserRouter>
   );
 }

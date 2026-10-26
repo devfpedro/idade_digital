@@ -1,0 +1,44 @@
+.barra-usuarios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.busca-usuarios {
+  flex: 1 1 18rem;
+}
+
+.tabela-usuarios {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 1.05rem;
+}
+
+.nivel {
+  font-weight: 700;
+  padding: 0.4em 0.8em;
+  border-radius: 999px;
+  color: #fff;
+}
+
+.nivel-administrador_chefe {
+  background: #4c1d95;
+}
+
+.nivel-administrador {
+  background: #1e3a8a;
+}
+
+.nivel-organizador {
+  background: #0f766e;
+}
+
+.nivel-usuario {
+  background: #475569;
+}
+
+:root[data-daltonismo] .nivel-organizador {
+  background: #8a5a00;
+}

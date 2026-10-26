@@ -1,0 +1,20 @@
+:root {
+  --altura-rodape: 3rem;
+}
+
+.rodape {
+  margin-top: auto;
+  min-height: var(--altura-rodape);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 0.5rem 1rem;
+  text-align: center;
+}
+
+.rodape p {
+  margin: 0;
+  font-size: 0.95rem;
+}

@@ -1,27 +1,49 @@
-// Gerenciamento de sessão do "Idade Digital".
-//
-// A sessão expira APENAS por inatividade: cada interação reconhecida
-// (clique, tecla, toque, rolagem) renova o timestamp `ultimaInteracaoEm`
-// (com debounce para evitar escritas repetidas no localStorage). Ao expirar,
-// um evento global é disparado — o App.jsx mostra o toast e redireciona.
-//
-// Estrutura persistida: { usuario, loginEm, ultimaInteracaoEm }
-
 const CHAVE_SESSAO = "sessao";
-export const TEMPO_SESSAO_MS = 10 * 60 * 1000; // 10 minutos sem interação
-const DEBOUNCE_INTERACAO_MS = 5_000; // frequência mínima de gravação no storage
-const INTERVALO_CHECAGEM_MS = 15_000; // checagem periódica de expiração
+export const TEMPO_SESSAO_MS = 30 * 60 * 1000;
+const DEBOUNCE_INTERACAO_MS = 5_000;
+const INTERVALO_CHECAGEM_MS = 15_000;
 
 export const EVENTO_SESSAO_EXPIRADA = "idade-digital:sessao-expirada";
 
+const CHAVE_AVISO = "avisoLogout";
+
+function descreverTempo(ms) {
+  const minutos = Math.round(ms / 60000);
+  return minutos === 1 ? "1 minuto" : `${minutos} minutos`;
+}
+
 function motivoExpiracao() {
-  if (TEMPO_SESSAO_MS < 60_000) {
-    const segundos = Math.round(TEMPO_SESSAO_MS / 1000);
-    return `Sua sessão expirou após ${segundos} segundos de inatividade. Faça login novamente.`;
+  return (
+    `Você ficou ${descreverTempo(TEMPO_SESSAO_MS)} sem usar a plataforma e, por segurança, ` +
+    "sua sessão foi encerrada. Isso também acontece quando a janela é fechada sem clicar em " +
+    "Sair. Para continuar, entre novamente com seu e-mail e sua senha."
+  );
+}
+
+// O aviso fica guardado até ser exibido: assim ele aparece mesmo que a expiração
+// seja percebida ao reabrir o site (janela fechada sem sair).
+export function lerAvisoLogout() {
+  try {
+    const aviso = JSON.parse(localStorage.getItem(CHAVE_AVISO) || "null");
+    return aviso && typeof aviso.motivo === "string" ? aviso : null;
+  } catch {
+    return null;
   }
-  const minutos = Math.round(TEMPO_SESSAO_MS / 60000);
-  const periodo = minutos === 1 ? "1 minuto" : `${minutos} minutos`;
-  return `Sua sessão expirou após ${periodo} de inatividade. Faça login novamente.`;
+}
+
+export function limparAvisoLogout() {
+  try {
+    localStorage.removeItem(CHAVE_AVISO);
+  } catch {
+    // storage indisponível: nada a limpar
+  }
+}
+
+export function formatarTempoRestante(ms) {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const minutos = Math.floor(total / 60);
+  const segundos = String(total % 60).padStart(2, "0");
+  return minutos > 0 ? `${minutos} min ${segundos} s` : `${total} s`;
 }
 
 export function obterSessao() {
@@ -51,22 +73,40 @@ export function obterSessao() {
   }
 }
 
-export function criarSessao(usuario) {
+export function criarSessao(usuario, token, papel = "usuario", email = "") {
   const agora = Date.now();
   localStorage.setItem(
     CHAVE_SESSAO,
-    JSON.stringify({ usuario, loginEm: agora, ultimaInteracaoEm: agora }),
+    JSON.stringify({
+      usuario,
+      papel,
+      email,
+      token,
+      loginEm: agora,
+      ultimaInteracaoEm: agora,
+    }),
   );
+}
+
+export function obterToken() {
+  return obterSessao()?.token || "";
 }
 
 export function encerrarSessao({ notificar = false, motivo = "" } = {}) {
   const haviaSessao = Boolean(obterSessao());
   localStorage.removeItem(CHAVE_SESSAO);
   if (notificar && haviaSessao) {
+    const mensagem = motivo || motivoExpiracao();
+    try {
+      localStorage.setItem(
+        CHAVE_AVISO,
+        JSON.stringify({ motivo: mensagem, em: Date.now() }),
+      );
+    } catch {
+      // sem storage o aviso só aparece com a página aberta (evento abaixo)
+    }
     window.dispatchEvent(
-      new CustomEvent(EVENTO_SESSAO_EXPIRADA, {
-        detail: { motivo: motivo || motivoExpiracao() },
-      }),
+      new CustomEvent(EVENTO_SESSAO_EXPIRADA, { detail: { motivo: mensagem } }),
     );
   }
 }
@@ -93,10 +133,6 @@ export function milissegundosRestantes() {
   return restante > 0 ? restante : 0;
 }
 
-// Vigia único da sessão: ouve as interações do usuário para RENOVAR o
-// timestamp de inatividade e, ao mesmo tempo, detectar a expiração —
-// tanto no instante da interação quanto na checagem periódica (usuário
-// completamente parado). Retorna a função que remove tudo.
 export function iniciarVigiaSessao() {
   const eventos = ["click", "keydown", "touchstart", "wheel", "scroll"];
 
@@ -113,7 +149,7 @@ export function iniciarVigiaSessao() {
 
   function aoInteragir() {
     const sessao = obterSessao();
-    if (!sessao) return; // sem sessão (login/tela pública): nada a fazer
+    if (!sessao) return;
 
     if (sessaoExpirada(sessao)) {
       encerrarSessao({ notificar: true });
