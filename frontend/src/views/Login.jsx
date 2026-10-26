@@ -1,70 +1,40 @@
 import { useState } from "react";
+import { Button, Modal } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
 import { criarSessao } from "../services/auth";
-import dados from "../users_mock.json";
-
-// Autenticação mock: valida o e-mail (e a senha, se preenchida) contra o
-// users_mock.json. O arquivo é gitignored; o .example versionado garante que
-// o build não quebre para quem clona o repositório.
-function carregarUsuarios() {
-  if (dados && Array.isArray(dados.users) && dados.users.length > 0) {
-    return dados.users;
-  }
-  return [];
-}
+import { api } from "../services/api";
+import BarraAcessibilidade from "../components/BarraAcessibilidade";
+import Rodape from "../components/Rodape";
 
 function Login() {
   const navigate = useNavigate();
   const [erro, setErro] = useState("");
-  const [mensagemSuporte, setMensagemSuporte] = useState("");
+  const [suporteAberto, setSuporteAberto] = useState(false);
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [entrando, setEntrando] = useState(false);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setErro("");
 
     const email = e.target.email.value.trim().toLowerCase();
     const senha = e.target.senha.value;
 
-    // Validações básicas (segurança: não confiar só no atributo required)
     if (!email || !senha) {
       setErro("Preencha o e-mail e a senha para entrar.");
       return;
     }
 
-    const usuarios = carregarUsuarios();
-    if (usuarios.length === 0) {
-      setErro(
-        "Nenhum usuário de teste configurado. Verifique o users_mock.json.",
-      );
-      return;
+    setEntrando(true);
+    try {
+      const { token, usuario } = await api.login(email, senha);
+      criarSessao(usuario.nome || email, token, usuario.papel, usuario.email);
+      navigate("/");
+    } catch (falha) {
+      setErro(falha.message);
+      setEntrando(false);
     }
-
-    const usuarioEncontrado = usuarios.find(
-      (u) =>
-        u && typeof u.email === "string" && u.email.toLowerCase() === email,
-    );
-
-    if (!usuarioEncontrado) {
-      setErro("E-mail não cadastrado. Verifique e tente novamente.");
-      return;
-    }
-
-    if (senha !== usuarioEncontrado.senha) {
-      setErro("Senha incorreta. Tente novamente.");
-      return;
-    }
-
-    // A estrutura da sessão é responsabilidade exclusiva do auth.js
-    criarSessao(usuarioEncontrado.nome || email);
-    navigate("/");
-  }
-
-  function abrirSuporte() {
-    setMensagemSuporte(
-      "Suporte: suporte@idadedigital.com.br | Telefone: 0800 555 0123",
-    );
   }
 
   function acaoIndisponivel(nomeBotao) {
@@ -73,7 +43,11 @@ function Login() {
   }
 
   return (
-    <div className="auth-container">
+    <div className="login-pagina">
+    <main className="auth-container" id="conteudo-principal" tabIndex={-1}>
+      <div className="barra-login">
+        <BarraAcessibilidade publico />
+      </div>
       <div className="auth-card">
         <div className="auth-left">
           <h2>Primeira vez aqui?</h2>
@@ -91,6 +65,8 @@ function Login() {
           <h2>Entre na sua conta</h2>
           {erro && (
             <p className="form-mensagem-erro" role="alert">
+              <span aria-hidden="true">⚠️ </span>
+              <span className="visually-hidden">Erro: </span>
               {erro}
               <button
                 type="button"
@@ -145,8 +121,8 @@ function Login() {
                 {mostrarSenha ? "Esconder" : "Mostrar"}
               </button>
             </div>
-            <button type="submit" className="btn-solid">
-              ENTRAR
+            <button type="submit" className="btn-solid" disabled={entrando}>
+              {entrando ? "ENTRANDO..." : "ENTRAR"}
             </button>
           </form>
 
@@ -178,7 +154,7 @@ function Login() {
           className="btn-suporte"
           aria-label="Suporte e contato"
           title="Suporte/Contato"
-          onClick={abrirSuporte}
+          onClick={() => setSuporteAberto(true)}
         >
           <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true">
             <path d="M19.4 13a7.6 7.6 0 000-2l2.1-1.6a.5.5 0 00.1-.7l-2-3.4a.5.5 0 00-.6-.2l-2.5 1a7.6 7.6 0 00-1.7-1L14.4 2.4a.5.5 0 00-.5-.4h-4a.5.5 0 00-.5.4L9 5a7.6 7.6 0 00-1.7 1l-2.5-1a.5.5 0 00-.6.2l-2 3.4a.5.5 0 00.1.7L4.6 11a7.6 7.6 0 000 2l-2.1 1.6a.5.5 0 00-.1.7l2 3.4c.1.2.4.3.6.2l2.5-1c.5.4 1.1.7 1.7 1l.4 2.6c0 .2.2.4.5.4h4c.2 0 .5-.2.5-.4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1c.2.1.5 0 .6-.2l2-3.4a.5.5 0 00-.1-.7L19.4 13z" />
@@ -188,19 +164,24 @@ function Login() {
         </button>
       </div>
 
-      {mensagemSuporte && (
-        <div className="suporte-balao" role="status">
-          {mensagemSuporte}
-          <button
-            type="button"
-            className="btn-fechar"
-            aria-label="Fechar informações de suporte"
-            onClick={() => setMensagemSuporte("")}
-          >
-            ✕
-          </button>
-        </div>
-      )}
+    </main>
+
+      <Modal show={suporteAberto} onHide={() => setSuporteAberto(false)} centered size="lg" aria-labelledby="titulo-suporte">
+        <Modal.Header closeButton closeLabel="Fechar a janela de ajuda" className="suporte-cabecalho">
+          <Modal.Title as="h2" id="titulo-suporte">Preciso de ajuda</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="suporte-corpo">
+          <p>Se tiver qualquer dificuldade para entrar, fale com a nossa equipe:</p>
+          <ul className="suporte-contatos">
+            <li><span aria-hidden="true">✉️</span> E-mail: <strong>suporte@idadedigital.com.br</strong></li>
+            <li><span aria-hidden="true">📞</span> Telefone: <strong>0800 555 0123</strong></li>
+          </ul>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button className="btn-suporte-fechar" onClick={() => setSuporteAberto(false)}>Fechar</Button>
+        </Modal.Footer>
+      </Modal>
+    <Rodape />
     </div>
   );
 }

@@ -10,7 +10,7 @@
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3-000000?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Planejado-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 
 </div>
 
@@ -33,7 +33,7 @@ O objetivo é capacitar os usuários no manuseio de computadores e smartphones, 
   - [⚡ Resumo rápido](#-resumo-rápido--executar-com-startsh)
   - [Passo 1 — Clonar o repositório](#passo-1--clonar-o-repositório)
   - [Passo 2 — Verificar as ferramentas instaladas](#passo-2--verificar-as-ferramentas-instaladas)
-  - [Passo 3 — Criar as credenciais de teste](#passo-3--criar-o-arquivo-de-credenciais-de-teste-obrigatório)
+  - [Passo 3 — Criar as credenciais de teste](#passo-3--criar-o-arquivo-de-credenciais-de-teste-opcional)
   - [Passo 4 — Instalar as dependências do front-end](#passo-4--instalar-as-dependências-do-front-end)
   - [Passo 5 — Instalar as dependências do back-end](#passo-5--instalar-as-dependências-do-back-end-venv--pip)
   - [Passo 6 — Iniciar a aplicação](#passo-6--iniciar-backend-e-frontend-com-um-único-comando)
@@ -41,7 +41,7 @@ O objetivo é capacitar os usuários no manuseio de computadores e smartphones, 
   - [Encerrar](#encerrar)
   - [Execução manual](#alternativa-execução-manual-dois-terminais)
 - [🔐 Variáveis de ambiente](#-variáveis-de-ambiente-do-backend-opcionais)
-- [🧪 Scripts de verificação](#-scripts-de-verificação)
+- [🧪 Testes](#-testes)
 - [🔒 Notas de segurança](#-notas-de-segurança)
 - [👥 Colaboradores](#-colaboradores)
 
@@ -52,18 +52,26 @@ O objetivo é capacitar os usuários no manuseio de computadores e smartphones, 
 | Camada | Tecnologia |
 |---|---|
 | **Front-end** | React.js 19 + Vite 8 |
-| **Back-end** | Python 3 + Flask 3 + Flask-CORS |
-| **Banco de dados** | PostgreSQL *(planejado para as próximas fases)* |
+| **Back-end** | Python 3 + Flask 3 + Flask-CORS + psycopg 3 |
+| **Banco de dados** | PostgreSQL 14+ |
+| **Leitura em voz** | Piper TTS (voz neural em português, local) |
 
 ---
 
 ## ✨ Funcionalidades atuais
 
-- 🔐 **Autenticação mock de desenvolvimento** — login validado contra `frontend/src/users_mock.json` (arquivo local, gitignored; 5 credenciais da equipe).
-- ⏱️ **Sessão com expiração por inatividade (10 minutos)** — cliques, digitação, toques e rolagem renovam o tempo automaticamente. Ao expirar, o usuário recebe uma notificação flutuante (**toast**) e é redirecionado ao login. O contador não é exibido na tela.
+- 🔐 **Login pela API com PostgreSQL** — e-mail e senha validados no servidor (senha em hash); os usuários da equipe vêm do `backend/db/users_mock.json` (local, gitignored) na criação do banco.
+- 🎓 **Cursos, módulos e informações vindos do banco**, com busca sem acento e **progresso por pessoa**.
+- 🧩 **Cursos em módulos** — cada módulo só é liberado ao concluir o anterior; a plataforma detecta sozinha a conclusão (texto lido até o fim, link aberto, vídeo assistido).
+- 👥 **Níveis de usuário** — *Administrador Chefe* (único; gerencia todos), *Administrador* (gerencia organizadores e usuários), *Organizador* (gerencia usuários) e *Usuário* (somente consulta). A gestão fica em “Meu menu → Gerenciar usuários”. O nível de cada conta da equipe vem do campo `papel` do `users_mock.json`.
+- 🗣️ **Leitura em voz natural** — voz neural **Faber** em português (Piper TTS), com pausas entre os elementos da página e velocidade ajustável (Rápido, Normal e Devagar; padrão: Normal), gerada no próprio servidor, igual em Windows, macOS e Linux e sem enviar texto para a internet; se indisponível, usa a voz do navegador.
+- ✏️ **Edição de conteúdo pela própria plataforma** — Administrador Chefe e Administradores criam, editam e excluem informações (com capa e links de vídeo/artigo), módulos e conteúdos dos cursos. Imagens enviadas ficam em `backend/uploads/` (ignorado pelo Git).
+- 🤝 **Equipe e Parceiros** — integrantes (com foto e perfil do GitHub), parceiros e colaboradores externos, cadastrados no banco por Administrador Chefe e Administradores.
+- ♿ **Acessibilidade** — leitura em voz alta, aumento da letra, alto contraste, paleta para daltonismo, redução de movimentos, link “pular para o conteúdo” e foco visível.
+- ⏱️ **Sessão com expiração por inatividade (30 minutos)** — cliques, digitação, toques e rolagem renovam o tempo. Ao expirar (ou ao reabrir o site depois do prazo), um aviso fica na tela por alguns segundos antes do login. O tempo restante aparece em “Meu menu”.
 - 🧹 **Tratamento de dados corrompidos** — sessões inválidas armazenadas no `localStorage` são descartadas sem interromper a aplicação.
-- 🏠 **Home acessível (público 60+)** — boas-vindas personalizadas e cartões grandes de alto contraste para as futuras seções **Cursos** e **Informações**.
-- 👤 **Menu de perfil** — ícone redondo no canto superior direito com opções de Informações Pessoais, Suporte, Notificações e Sair.
+- 🏠 **Início acessível (público 60+)** — boas-vindas, atalhos grandes para **Cursos** e **Informações** e explicação de como a plataforma funciona.
+- 👤 **Meu menu** — canto superior direito, com Informações Pessoais, Suporte, Notificações, Gerenciar usuários (só para quem tem permissão), Sair e o tempo de sessão restante.
 - 🔑 **Tela de login acessível** — botões visuais para **“Esqueceu a senha?”** e **“Entrar com o Google”** (em desenvolvimento), além de suporte/contato e mensagens de erro claras.
 - 🔔 **Notificações flutuantes (toast)** — exibidas no topo central da tela, com animação e fechamento automático.
 - ▶️ **Execução unificada** — um único comando (`start.sh` / `start.bat`) sobe o back-end e o front-end juntos.
@@ -78,7 +86,7 @@ Antes de executar o projeto, tenha as seguintes ferramentas instaladas:
 - [Git](https://git-scm.com/)
 - [Node.js](https://nodejs.org/) — versão **LTS** recomendada
 - [Python 3](https://www.python.org/) — versão **3.10 ou superior**
-- [PostgreSQL](https://www.postgresql.org/) — necessário apenas quando o banco for integrado
+- [PostgreSQL](https://www.postgresql.org/) — versão **14 ou superior** (veja “Banco de dados” abaixo)
 
 > **Observação:** o `start.sh` instala automaticamente as dependências que estiverem faltando. Os passos manuais abaixo são úteis para configuração inicial ou para quem prefere controlar cada etapa explicitamente.
 
@@ -97,7 +105,6 @@ Com Git, Node.js e Python instalados, estes são os comandos necessários na pri
 ```bash
 git clone https://github.com/devfpedro/idade_digital.git
 cd idade_digital
-cp frontend/src/users_mock.json.example frontend/src/users_mock.json
 chmod +x start.sh
 ./start.sh
 ```
@@ -107,17 +114,18 @@ chmod +x start.sh
 ```bat
 git clone https://github.com/devfpedro/idade_digital.git
 cd idade_digital
-copy frontend\src\users_mock.json.example frontend\src\users_mock.json
 .\start.bat
 ```
 
 ### O que o script faz automaticamente?
 
-1. Instala o pacote do front-end (`npm install`) caso a pasta `node_modules` não exista.
-2. Cria o ambiente virtual do back-end (`venv`) caso ele não exista e instala o Flask com `pip`.
-3. Inicia o **back-end** em `http://127.0.0.1:5000` e o **front-end** em `http://localhost:5173` simultaneamente.
+1. Copia `backend/db/users_mock.json.example` para `backend/db/users_mock.json` (contas de teste) se o arquivo não existir.
+2. Instala o front-end (`npm install`) e repara dependências que faltem.
+3. Cria o ambiente virtual do back-end (`venv`) e instala as dependências com `pip`.
+4. Baixa a voz de leitura (Piper), cria o `backend/.env` e prepara o banco (veja “Banco de dados”).
+5. Inicia o **back-end** em `http://127.0.0.1:5000` e o **front-end** em `http://localhost:5173` simultaneamente.
 
-Depois, abra **[http://localhost:5173](http://localhost:5173)** e faça login com uma credencial do `users_mock.json`.
+Depois, abra **[http://localhost:5173](http://localhost:5173)** e faça login com uma credencial do `backend/db/users_mock.json`.
 
 > Para encerrar os dois servidores ao mesmo tempo, pressione **`Ctrl+C`** no terminal que executou o `./start.sh`.
 
@@ -141,7 +149,7 @@ cd idade_digital
 #### 🐧 Linux / macOS
 
 ```bash
-node --version     # precisa de Node.js 18+ (recomendado LTS)
+node --version     # precisa de Node.js 20.19+ ou 22.12+ (recomendado LTS)
 npm --version
 python3 --version  # precisa de Python 3.10+
 ```
@@ -156,29 +164,29 @@ python --version
 
 ---
 
-### Passo 3 — Criar o arquivo de credenciais de teste (obrigatório)
+### Passo 3 — Criar o arquivo de credenciais de teste (opcional)
 
-O login valida as credenciais contra `frontend/src/users_mock.json`, que é **local e ignorado pelo Git**. Crie esse arquivo a partir do template versionado:
+Os scripts `start.sh`/`start.bat` já fazem isto sozinhos. Para criar à mão, a partir do template versionado (o arquivo real é **local e ignorado pelo Git**):
 
 #### 🐧 Linux / macOS
 
 ```bash
-cp frontend/src/users_mock.json.example frontend/src/users_mock.json
+cp backend/db/users_mock.json.example backend/db/users_mock.json
 ```
 
 #### 🪟 Windows (CMD)
 
 ```bat
-copy frontend\src\users_mock.json.example frontend\src\users_mock.json
+copy backend\db\users_mock.json.example backend\db\users_mock.json
 ```
 
 #### 🪟 Windows (PowerShell)
 
 ```powershell
-Copy-Item frontend\src\users_mock.json.example frontend\src\users_mock.json
+Copy-Item backend\db\users_mock.json.example backend\db\users_mock.json
 ```
 
-> As credenciais padrão estão no próprio template (ex.: `pedro.henrique@idade.digital` / `senha-pedro-123`). O arquivo é gitignored e nunca será commitado.
+> O template traz uma conta de cada nível (Administrador Chefe, Administrador, Organizador e Usuário) além das contas da equipe; e-mails e senhas ficam no próprio arquivo. Esse arquivo só é lido pelo back-end ao criar o banco.
 
 ---
 
@@ -267,7 +275,7 @@ curl http://127.0.0.1:5000/status
 curl -I http://localhost:5173
 ```
 
-Depois, abra **[http://localhost:5173](http://localhost:5173)** e faça login com uma credencial do `users_mock.json`.
+Depois, abra **[http://localhost:5173](http://localhost:5173)** e faça login com uma credencial do `backend/db/users_mock.json`.
 
 ---
 
@@ -313,16 +321,94 @@ npm run dev
 
 ---
 
-## 🔐 Variáveis de ambiente do back-end (opcionais)
+## 🗄️ Banco de dados (PostgreSQL)
+
+Basta ter o **PostgreSQL 14+ instalado e em execução**. O restante é automático: ao rodar `start.sh`/`start.bat`, o script cria o `backend/.env`, gera uma senha forte para o banco, cria o usuário e o banco `idade_digital`, aplica o esquema e os dados iniciais e cadastra os usuários.
+
+Na **primeira execução** (e só nela) é preciso autorizar a criação do banco com um administrador do PostgreSQL:
+
+| Sistema | O que acontece |
+|---|---|
+| **Windows** | O script pergunta o usuário (`postgres`) e a senha definidos na instalação do PostgreSQL. |
+| **Linux** | O script usa `sudo` (digite a senha do seu usuário do sistema); se não der, pergunta usuário e senha do PostgreSQL. |
+| **macOS (Homebrew)** | Normalmente nada é perguntado; senão, pergunta usuário e senha do PostgreSQL. |
+
+A senha do administrador **nunca é gravada**: é usada só na hora de criar o banco. Nas execuções seguintes nada é perguntado.
+
+**Servidor / automação (sem terminal):** defina `PG_ADMIN_USER` (padrão `postgres`) e `PG_ADMIN_PASSWORD` no ambiente para a criação automática, ou use um banco já provisionado informando `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` e `DB_PASSWORD` no `backend/.env`.
+
+Tabelas: `usuarios`, `cursos`, `modulos`, `conteudos`, `progresso_conteudo`, `progresso_modulo`, `informacoes`, `colaboradores` e `controle_seed`. Buscas ignoram acentos e maiúsculas (`unaccent` + `pg_trgm`). Sem banco acessível, o front abre, mas login e cursos não funcionam.
+
+## 🔐 Variáveis de ambiente do back-end
+
+Definidas em `backend/.env` (modelo em `backend/.env.example`):
 
 | Variável | Padrão | Descrição |
 |---|---|---|
-| `FLASK_DEBUG` | `true` | Liga/desliga o modo debug do Flask. |
-| `FLASK_RELOADER` | `true` | Liga/desliga o auto-reload. O `start.sh` desliga essa opção para evitar processos órfãos. |
+| `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` | `localhost` / `5432` / `idade_digital` / `idade_digital` | Conexão com o PostgreSQL. |
+| `DB_PASSWORD` | gerada pelo script | Senha do usuário do banco (em branco = o script gera e grava no `.env`). |
+| `PG_ADMIN_USER` / `PG_ADMIN_PASSWORD` | `postgres` / — | Opcionais: administrador usado só para criar o banco sem perguntar (automação). Nunca são gravados. |
+| `SECRET_KEY` | gerada pelo script | Assina os tokens de login. Sem ela, os logins caem ao reiniciar. |
+| `TOKEN_HORAS` | `8` | Validade do token (a inatividade de 30 min é controlada no front). |
+| `VOZ_PIPER` | `faber,cadu,jeff` | Vozes neurais da leitura em voz alta. A **Faber** é a padrão; `cadu` e `jeff` estão em teste. Cada uma é baixada uma vez (~60 MB) para `backend/voz_modelos/`. |
+| `FLASK_DEBUG` | `false` | `true` liga o modo debug do Flask (expõe o depurador; só em desenvolvimento local). |
+| `FLASK_RELOADER` | `true` | Liga/desliga o auto-reload. Os scripts de início desligam essa opção para evitar processos órfãos. |
 
 ---
 
-## 🧪 Scripts de verificação
+## 🧪 Testes
+
+Os comandos de teste usam apenas o Python do próprio `venv` e funcionam em **Linux, macOS e Windows**; só muda o caminho do interpretador: `venv/bin/python` (Linux/macOS) ou `venv\Scripts\python` (Windows). Nenhum deles é exclusivo do Linux.
+
+### O que é preciso antes de rodar
+
+1. **PostgreSQL em execução** e o projeto iniciado **ao menos uma vez** com `start.sh`/`start.bat`: é isso que cria o `venv`, o `backend/.env`, o banco e as contas de teste (`backend/db/users_mock.json`).
+2. Use **somente um banco de desenvolvimento**: os testes criam e apagam registros `ZZ-Teste` / `zz.teste.*`.
+3. Os testes de **leitura em voz** são ignorados automaticamente se a voz (Piper) não estiver instalada.
+4. O **teste de estresse** precisa do projeto rodando (`./start.sh` ou `start.bat` em outro terminal).
+
+### Back-end — testes automatizados (62 testes, ~10 s)
+
+Cobrem login e segurança, níveis de usuário, cursos e módulos, informações, uploads, equipe e voz. Rode de dentro da pasta `backend`:
+
+🐧 **Linux / macOS**
+
+```bash
+cd backend
+venv/bin/python -m unittest discover -s tests -t . -v
+```
+
+🪟 **Windows (CMD)**
+
+```bat
+cd backend
+venv\Scripts\python -m unittest discover -s tests -t . -v
+```
+
+🪟 **Windows (PowerShell)**
+
+```powershell
+cd backend
+.\venv\Scripts\python -m unittest discover -s tests -t . -v
+```
+
+Para rodar só um arquivo: acrescente o nome do módulo, por exemplo `tests.test_niveis_de_usuario`, no lugar de `discover -s tests -t .`.
+
+### Back-end — teste de estresse e concorrência
+
+Simula leituras simultâneas, pico de logins, 300 requisições ao mesmo tempo, escritas concorrentes (módulos, exclusões, conclusão de conteúdo, e-mail duplicado), síntese de voz, entradas hostis e carga mista. Na **raiz do projeto**, com o servidor rodando:
+
+```bash
+# Linux / macOS
+backend/venv/bin/python backend/tests/estresse.py --rapido
+```
+
+```bat
+:: Windows (CMD)
+backend\venv\Scripts\python backend\tests\estresse.py --rapido
+```
+
+Sem `--rapido` a carga é o dobro. Use `--base http://127.0.0.1:5000` para apontar para outro endereço. O servidor do `start.sh` é o de desenvolvimento do Flask: os números servem para achar erros, não como medida de produção.
 
 ### Front-end
 
@@ -332,28 +418,18 @@ npm run lint    # análise estática (ESLint)
 npm run build   # build de produção
 ```
 
-### Back-end
+### Verificação rápida de sintaxe do back-end
 
-**Linux:**
-
-```bash
-backend/venv/bin/python -m py_compile backend/src/app.py
-```
-
-**Windows:**
-
-```bat
-backend\venv\Scripts\python -m py_compile backend\src\app.py
-```
+🐧 `backend/venv/bin/python -m py_compile backend/src/app.py`  ·  🪟 `backend\venv\Scripts\python -m py_compile backend\src\app.py`
 
 ---
 
 ## 🔒 Notas de segurança
 
-- 🔐 **`users_mock.json` é gitignored** — as credenciais de teste não são enviadas para o repositório. O arquivo `.example` versionado funciona como template.
+- 🔐 **`backend/db/users_mock.json` é gitignored** — as credenciais de teste não são enviadas para o repositório. O `.example` versionado é o template e serve apenas de fonte para criar os usuários no banco.
+- 🔑 **Login pela API** — senhas guardadas com hash (scrypt), token assinado com expiração, limite de tentativas por e-mail/IP e mensagem de erro genérica (não revela se o e-mail existe).
 - 🌐 **CORS com allowlist explícita** — origens desconhecidas não recebem headers CORS.
-- ✅ **Validação em duas camadas** — atributos `required` do HTML e validação em JavaScript para campos vazios, e-mail e senha.
-- 🧪 **Autenticação mock para desenvolvimento** — ao integrar o back-end real, o fluxo deverá utilizar hash de senha (**bcrypt/argon2**) e sessão/tokens gerenciados no servidor.
+- ✅ **Validação no navegador e no servidor** — o servidor valida todo corpo recebido e recusa o que não for esperado; uploads são checados pelo conteúdo do arquivo.
 
 ---
 

@@ -1,13 +1,31 @@
+# Dependências e ambientes virtuais
 frontend/node_modules/
 backend/venv/
+.venv/
 __pycache__/
-.freebuff/
-.env
+*.py[cod]
 
-# Credenciais mock de autenticação (não versionar)
+# Segredos e configuração local (nunca versionar)
+.env
+.env.local
+backend/db/users_mock.json
+# caminhos antigos do mesmo arquivo (quem já o tinha localmente continua protegido)
 frontend/src/users_mock.json
 backend/src/users_mock.json
+*.pem
+*.key
 
-# Logs gerados pelo start.bat (backend Flask em background)
+# Gerados pela plataforma ou pelos scripts de início
+backend/voz_modelos/
+backend/uploads/
 backend/flask_out.log
 backend/flask_err.log
+*.log
+
+# Editores e sistemas operacionais
+.vscode/
+.idea/
+.freebuff/
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,159 @@
+.grupo-equipe {
+  margin-bottom: 3.5rem;
+}
+
+.grupo-titulo {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 0.4rem;
+}
+
+.grupo-descricao {
+  font-size: 1.1rem;
+  color: #334155;
+  margin-bottom: 1.5rem;
+}
+
+.grupo-vazio {
+  background: #fff;
+  border: 2px dashed #64748b;
+  border-radius: 12px;
+  padding: 1.5rem;
+  font-size: 1.1rem;
+  color: #334155;
+}
+
+.lista-sem-marcador {
+  list-style: none;
+}
+
+.cartao-pessoa {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+}
+
+.avatar-pessoa {
+  display: inline-grid;
+  place-items: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+}
+
+.avatar-parceiro,
+.avatar-colaborador {
+  background: #dbeafe;
+  font-size: 2rem;
+}
+
+.pessoa-nome {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.25rem;
+}
+
+.pessoa-funcao {
+  font-weight: 700;
+  color: #1d4ed8;
+  margin-bottom: 0.5rem;
+}
+
+.pessoa-descricao {
+  color: #334155;
+  margin: 0;
+}
+
+:root[data-alto-contraste] .pessoa-funcao {
+  color: #000;
+}
+
+:root[data-alto-contraste] .avatar-pessoa {
+  background: #000;
+  color: #fff;
+}
+
+.grupo-equipe ul.row {
+  padding-left: 0;
+  margin-bottom: 0;
+}
+
+.pessoa-funcoes {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+  color: #1d4ed8;
+}
+
+.pessoa-funcoes li + li {
+  font-weight: 600;
+  color: #334155;
+}
+
+:root[data-alto-contraste] .pessoa-funcoes,
+:root[data-alto-contraste] .pessoa-funcoes li + li {
+  color: #000;
+}
+
+.avatar-foto {
+  object-fit: cover;
+  background: #e2e8f0;
+}
+
+.pessoa-github {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #1d4ed8;
+  text-underline-offset: 3px;
+}
+
+.pessoa-acoes {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.escolha-tipo {
+  display: grid;
+  gap: 1rem;
+}
+
+.opcao-tipo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: left;
+  background: #fff;
+  border: 2px solid #1d4ed8;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  font-size: 1.1rem;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.opcao-tipo:hover,
+.opcao-tipo:focus-visible {
+  background: #dbeafe;
+}
+
+:root[data-alto-contraste] .opcao-tipo {
+  border-color: #000;
+}
+
+:root[data-alto-contraste] .pessoa-github {
+  color: #0000cc;
+}

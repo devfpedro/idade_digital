@@ -1,0 +1,127 @@
+:focus-visible {
+  outline: 3px solid #f59e0b;
+  outline-offset: 3px;
+}
+
+main:focus {
+  outline: none;
+}
+
+h1:focus {
+  outline: none;
+}
+
+button,
+.btn,
+.nav-link,
+input[type="checkbox"] {
+  min-height: 44px;
+}
+
+input[type="checkbox"] {
+  min-height: 0;
+}
+
+:root[data-daltonismo] {
+  --cor-sucesso: #0072b2;
+  --cor-erro: #b84a00;
+  --cor-aviso: #8a5a00;
+}
+
+:root[data-daltonismo] .form-mensagem-erro {
+  background: #fff3e0;
+  border: 2px solid #b84a00;
+  color: #7a3000;
+}
+
+:root[data-daltonismo] .item-sair {
+  color: #7a3000;
+}
+
+:root[data-alto-contraste] body,
+:root[data-alto-contraste] .main-container,
+:root[data-alto-contraste] .home-container,
+:root[data-alto-contraste] .auth-container {
+  background: #ffffff;
+  color: #000000;
+}
+
+:root[data-alto-contraste] .hero,
+:root[data-alto-contraste] .myHeader,
+:root[data-alto-contraste] .auth-left {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+:root[data-alto-contraste] .hero-subtitle,
+:root[data-alto-contraste] .hero-title {
+  color: #ffffff;
+}
+
+:root[data-alto-contraste] .btn-accent,
+:root[data-alto-contraste] .btn-solid,
+:root[data-alto-contraste] .btn-logout,
+:root[data-alto-contraste] .span-perfil {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 3px solid #ffffff !important;
+  outline: 3px solid #000000;
+}
+
+:root[data-alto-contraste] .course-card,
+:root[data-alto-contraste] .cartao-secao,
+:root[data-alto-contraste] .item-aula,
+:root[data-alto-contraste] .home-card,
+:root[data-alto-contraste] .auth-card {
+  border: 3px solid #000000 !important;
+  background: #ffffff !important;
+}
+
+:root[data-alto-contraste] .course-title,
+:root[data-alto-contraste] .course-description,
+:root[data-alto-contraste] .course-meta,
+:root[data-alto-contraste] .cartao-titulo,
+:root[data-alto-contraste] .cartao-descricao,
+:root[data-alto-contraste] .home-card h1,
+:root[data-alto-contraste] .home-frase,
+:root[data-alto-contraste] .home-info {
+  color: #000000 !important;
+}
+
+:root[data-alto-contraste] a:not(.btn):not(.cartao-secao):not(.nav-link):not(.navbar-brand):not(.link-pular) {
+  color: #0000cc;
+  text-decoration: underline;
+}
+
+:root[data-alto-contraste] .btn-acess {
+  background: #ffffff;
+  color: #000000;
+  border: 3px solid #000000;
+}
+
+:root[data-alto-contraste] :focus-visible {
+  outline: 4px solid #ff8c00;
+  box-shadow: 0 0 0 2px #000000;
+}
+
+:root[data-alto-contraste] .progresso-barra > div {
+  background: #000000;
+}
+
+:root[data-sem-animacao] *,
+:root[data-sem-animacao] *::before,
+:root[data-sem-animacao] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

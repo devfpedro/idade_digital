@@ -1,0 +1,96 @@
+.barra-acessibilidade {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-acess {
+  font-weight: 700;
+  min-height: 44px;
+  border: 2px solid #1e40af;
+  color: #0f172a;
+}
+
+.menu-acess {
+  min-width: 17rem;
+  padding: 0.75rem;
+}
+
+.grupo-acess {
+  margin-bottom: 0.75rem;
+}
+
+.rotulo-acess {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+.valor-acess {
+  align-self: center;
+  min-width: 3.5rem;
+  text-align: center;
+  font-weight: 700;
+}
+
+.opcao-acess {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.opcao-acess input {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.ajuda-acess {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #475569;
+  line-height: 1.3;
+}
+
+.opcao-acess {
+  align-items: flex-start;
+  font-weight: 600;
+}
+
+.opcao-acess input {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.faixa-acessibilidade {
+  background: #e2e8f0;
+  border-bottom: 1px solid #94a3b8;
+  padding: 0.4rem 0;
+}
+
+.faixa-acessibilidade .conteudo-faixa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.faixa-acessibilidade .texto-faixa {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+/* O menu precisa ficar acima do cabeçalho fixo (z-index 1030) */
+.faixa-acessibilidade {
+  position: relative;
+  z-index: 1040;
+}

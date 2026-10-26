@@ -19,7 +19,6 @@
   box-sizing: border-box;
 }
 
-/* Em telas estreitas o cartão vira coluna (sem cortes laterais) */
 @media (max-width: 720px) {
   .auth-card {
     flex-direction: column;
@@ -41,12 +40,12 @@
 .auth-left h2 {
   color: #ffffff;
   margin: 0 0 12px;
-  font-size: 30px;
+  font-size: 1.667rem;
 }
 
 .auth-left p {
   margin: 0 0 28px;
-  font-size: 19px;
+  font-size: 1.056rem;
   line-height: 1.4;
 }
 
@@ -56,7 +55,7 @@
   color: white;
   padding: 14px 36px;
   border-radius: 30px;
-  font-size: 18px;
+  font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
 }
@@ -74,7 +73,7 @@
 .auth-right h2 {
   color: #2563eb;
   margin: 0 0 24px;
-  font-size: 28px;
+  font-size: 1.556rem;
 }
 
 .auth-right form {
@@ -82,8 +81,9 @@
   max-width: 380px;
 }
 
-.input-group {
+.auth-container .input-group {
   display: flex;
+  flex-wrap: nowrap; /* o Bootstrap usa wrap e empilhava ícone, campo e botão */
   align-items: center;
   background: #f2f2f2;
   border-radius: 8px;
@@ -92,18 +92,20 @@
   border: 2px solid #c7ccd4;
 }
 
-.input-group .icon {
+.auth-container .input-group .icon {
   color: #999;
   margin-right: 10px;
   display: flex;
 }
 
-.input-group input {
+.auth-container .input-group input {
   border: none;
   background: transparent;
   outline: none;
+  flex: 1;
+  min-width: 0;
   width: 100%;
-  font-size: 19px;
+  font-size: 1.056rem;
   color: #222;
 }
 
@@ -114,13 +116,12 @@
   border: none;
   padding: 16px;
   border-radius: 30px;
-  font-size: 20px;
+  font-size: 1.111rem;
   font-weight: bold;
   cursor: pointer;
   margin-top: 8px;
 }
 
-/* Mensagens de erro/sucesso do formulário */
 .form-mensagem-erro {
   width: 100%;
   max-width: 380px;
@@ -130,7 +131,7 @@
   background: #fdecea;
   border: 1px solid #f5c6c0;
   color: #b3261e;
-  font-size: 17px;
+  font-size: 0.944rem;
   text-align: left;
   display: flex;
   align-items: flex-start;
@@ -142,7 +143,7 @@
   background: transparent;
   border: none;
   color: inherit;
-  font-size: 14px;
+  font-size: 0.778rem;
   cursor: pointer;
   padding: 0 2px;
   line-height: 1;
@@ -162,20 +163,18 @@
   outline-offset: 2px;
 }
 
-/* Esqueceu a senha */
 .btn-link {
   margin-top: 12px;
   background: transparent;
   border: none;
   color: #2563eb;
-  font-size: 18px;
+  font-size: 1rem;
   font-weight: bold;
   text-decoration: underline;
   cursor: pointer;
   padding: 8px;
 }
 
-/* Entrar com o Google */
 .btn-google {
   margin-top: 8px;
   display: inline-flex;
@@ -184,7 +183,7 @@
   background: #ffffff;
   border: 2px solid #dadce0;
   color: #3c4043;
-  font-size: 17px;
+  font-size: 0.944rem;
   font-weight: bold;
   padding: 12px 22px;
   border-radius: 30px;
@@ -196,11 +195,10 @@
   border-color: #bdc1c6;
 }
 
-/* Engrenagem de suporte/contato (canto inferior direito) */
 .btn-suporte {
   position: fixed;
   right: 20px;
-  bottom: 20px;
+  bottom: calc(var(--altura-rodape, 3rem) + 16px);
   height: 60px;
   padding: 0 24px;
   gap: 10px;
@@ -208,7 +206,7 @@
   border: none;
   background: #2563eb;
   color: #ffffff;
-  font-size: 18px;
+  font-size: 1rem;
   font-weight: bold;
   display: flex;
   align-items: center;
@@ -230,44 +228,74 @@
   fill: #1d4ed8;
 }
 
-/* Balão de informações do suporte */
-.suporte-balao {
-  position: fixed;
-  right: 20px;
-  bottom: 92px;
-  background: #1f2430;
-  color: #ffffff;
-  padding: 12px 16px;
-  border-radius: 10px;
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-  max-width: min(380px, calc(100vw - 40px));
-  z-index: 1001;
+.suporte-cabecalho .modal-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0f172a;
 }
-/* Rótulos fixos acima dos campos */
+
+.suporte-cabecalho .btn-close {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  background-size: 1.6rem;
+  opacity: 1;
+  border: 2px solid #0f172a;
+  border-radius: 8px;
+}
+
+.suporte-corpo {
+  font-size: 1.5rem;
+  line-height: 1.6;
+  color: #1f2937;
+  padding: 1.5rem 2rem;
+}
+
+.suporte-contatos {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.suporte-contatos li {
+  background: #eff6ff;
+  border: 2px solid #1d4ed8;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  overflow-wrap: anywhere;
+}
+
+.btn-suporte-fechar {
+  background: #2563eb;
+  border: none;
+  font-size: 1.4rem;
+  font-weight: 700;
+  padding: 0.75rem 2.5rem;
+  border-radius: 999px;
+}
+
 .campo-rotulo {
   display: block;
   text-align: left;
-  font-size: 18px;
+  font-size: 1rem;
   font-weight: bold;
   color: #1f2430;
   margin-bottom: 6px;
 }
-.input-group:focus-within {
+.auth-container .input-group:focus-within {
   border-color: #1d4ed8;
   background: #ffffff;
 }
-.input-group input::placeholder {
+.auth-container .input-group input::placeholder {
   color: #6b7280;
 }
 .btn-olho {
   background: transparent;
   border: none;
   color: #1d4ed8;
-  font-size: 16px;
+  font-size: 0.889rem;
   font-weight: bold;
   cursor: pointer;
   padding: 6px 4px;
@@ -276,4 +304,26 @@
 .btn-olho:focus-visible {
   outline: 3px solid #1e40af;
   outline-offset: 2px;
+}
+
+.auth-container {
+  position: relative;
+}
+
+.barra-login {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+}
+
+.login-pagina {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-pagina .auth-container {
+  flex: 1;
+  min-height: 0;
 }
