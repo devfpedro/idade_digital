@@ -168,4 +168,9 @@ def provisionar():
                     "[db] Não foi possível usar o sudo; tentando com usuário e senha do PostgreSQL."
                 )
 
-    return _administrador_por_pergunta()
+    try:
+        return _administrador_por_pergunta()
+    except (EOFError, KeyboardInterrupt):
+        # No Windows, isatty() é verdadeiro até para "< nul"; sem entrada não há como perguntar
+        print("\n[db] Pergunta cancelada ou sem entrada disponível.", file=sys.stderr)
+        return False

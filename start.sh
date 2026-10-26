@@ -13,6 +13,147 @@ ENCERRANDO=0
 log()  { echo "[start] $*"; }
 erro() { echo "[start] ERRO: $*" >&2; }
 
+# ---------- Dependências EXTERNAS (Node.js, Python, PostgreSQL) ----------
+# Quando faltam, o script explica, informa o espaço em disco e oferece instalar com
+# a tecla "s". INSTALAR_DEPENDENCIAS=s ou n responde sem perguntar (automação).
+SUDO=""
+[[ "$(id -u)" != "0" ]] && SUDO="sudo"
+
+# Pergunta s/n com UMA tecla. Retorno 0 = sim. Sem terminal interativo a resposta é "não".
+perguntar_sn() {
+  case "${INSTALAR_DEPENDENCIAS:-}" in
+    [sS]) return 0 ;;
+    [nN]) return 1 ;;
+  esac
+  [[ -t 0 ]] || return 1
+  local resposta
+  read -r -n 1 -p "[start] $1 [s/n]: " resposta || return 1
+  echo ""
+  [[ "$resposta" == [sS] ]]
+}
+
+gerenciador_de_pacotes() {
+  local g
+  for g in apt-get dnf pacman zypper brew; do
+    if command -v "$g" >/dev/null 2>&1; then echo "$g"; return 0; fi
+  done
+  return 1
+}
+
+# oferecer_instalacao NOME FUNÇÃO DOWNLOAD DISCO URL COMANDO [NOTA]
+oferecer_instalacao() {
+  local nome="$1" funcao="$2" download="$3" disco="$4" url="$5" comando="$6" nota="${7:-}"
+  echo ""
+  echo "[start] ============================================================"
+  echo "[start] DEPENDÊNCIA EXTERNA AUSENTE: $nome"
+  echo "[start] $funcao"
+  echo "[start]"
+  echo "[start] Ela é um programa EXTERNO ao projeto: seria instalada no seu computador,"
+  echo "[start] fora da pasta do projeto, com o comando:"
+  echo "[start]   $comando"
+  echo "[start] Isso ocupa espaço em disco: download de cerca de $download e cerca de"
+  echo "[start] $disco depois de instalada (valores aproximados)."
+  [[ -n "$nota" ]] && echo "[start] $nota"
+  echo "[start] Instalação manual: $url"
+  echo "[start] ============================================================"
+  if ! perguntar_sn "Deseja instalar $nome agora?"; then
+    log "Instalação recusada. Instale manualmente e rode o ./start.sh de novo."
+    return 1
+  fi
+  log "Instalando $nome (pode pedir a senha do SEU usuário, por causa do sudo)..."
+  if ! bash -c "$comando"; then
+    erro "a instalação de $nome falhou ou foi cancelada."
+    return 1
+  fi
+  hash -r
+  log "$nome instalado."
+}
+
+oferecer_node() {
+  local g comando download disco
+  g="$(gerenciador_de_pacotes)" || { log "Nenhum gerenciador de pacotes conhecido; instale o Node.js manualmente."; return 1; }
+  case "$g" in
+    apt-get) comando="curl -fsSL https://deb.nodesource.com/setup_22.x | ${SUDO:+$SUDO -E }bash - && $SUDO apt-get install -y nodejs"; download="30 MB"; disco="200 MB" ;;
+    dnf) comando="curl -fsSL https://rpm.nodesource.com/setup_22.x | ${SUDO:+$SUDO }bash - && $SUDO dnf install -y nodejs"; download="30 MB"; disco="200 MB" ;;
+    pacman) comando="$SUDO pacman -S --noconfirm nodejs npm"; download="15 MB"; disco="70 MB" ;;
+    zypper) comando="$SUDO zypper install -y nodejs22 npm22"; download="30 MB"; disco="200 MB" ;;
+    brew) comando="brew install node"; download="50 MB"; disco="200 MB" ;;
+  esac
+  oferecer_instalacao "Node.js LTS" \
+    "O frontend (React + Vite) precisa do Node.js e do npm para instalar pacotes e rodar." \
+    "$download" "$disco" "https://nodejs.org" "$comando" \
+    "No apt/dnf é usado o repositório NodeSource (precisa do curl), pois o Node das distribuições costuma ser antigo demais para o Vite 8."
+}
+
+oferecer_python() {
+  local g comando download disco
+  g="$(gerenciador_de_pacotes)" || { log "Nenhum gerenciador de pacotes conhecido; instale o Python manualmente."; return 1; }
+  case "$g" in
+    apt-get) comando="$SUDO apt-get install -y python3 python3-venv python3-pip"; download="25 MB"; disco="100 MB" ;;
+    dnf) comando="$SUDO dnf install -y python3 python3-pip"; download="20 MB"; disco="80 MB" ;;
+    pacman) comando="$SUDO pacman -S --noconfirm python python-pip"; download="15 MB"; disco="80 MB" ;;
+    zypper) comando="$SUDO zypper install -y python3 python3-pip"; download="20 MB"; disco="80 MB" ;;
+    brew) comando="brew install python"; download="20 MB"; disco="100 MB" ;;
+  esac
+  oferecer_instalacao "Python 3" \
+    "O backend (Flask) precisa do Python 3.10 ou mais novo com venv, ensurepip e tempfile." \
+    "$download" "$disco" "https://www.python.org/downloads/" "$comando"
+}
+
+postgres_instalado() {
+  command -v psql >/dev/null 2>&1 || command -v pg_ctl >/dev/null 2>&1 \
+    || [[ -d /usr/lib/postgresql ]] \
+    || { command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files 2>/dev/null | grep -q '^postgresql'; } \
+    || { command -v brew >/dev/null 2>&1 && brew list --formula 2>/dev/null | grep -q '^postgresql'; }
+}
+
+# Espera (até ~60 s) o PostgreSQL aceitar conexões na porta do banco
+aguardar_postgres() {
+  local i
+  for i in $(seq 1 30); do
+    if "$PYTHON" -c "import socket,sys; socket.create_connection(('${DB_HOST:-localhost}', int('${DB_PORT:-5432}')), 1)" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 2
+  done
+  return 1
+}
+
+# PostgreSQL local ausente (oferece instalar) ou parado (oferece iniciar)
+tratar_sem_postgres() {
+  local g comando download disco
+  g="$(gerenciador_de_pacotes)" || g=""
+  if postgres_instalado; then
+    if [[ "$g" == "brew" ]]; then comando="brew services start postgresql@16"; else comando="$SUDO systemctl start postgresql"; fi
+    echo ""
+    echo "[start] ============================================================"
+    echo "[start] DEPENDÊNCIA PARADA: o PostgreSQL está instalado, mas o serviço NÃO está"
+    echo "[start] em execução, então o banco não responde."
+    echo "[start] Para iniciar manualmente: $comando"
+    echo "[start] ============================================================"
+    perguntar_sn "Tentar iniciar o serviço agora?" || return 1
+    bash -c "$comando" || { erro "não foi possível iniciar o PostgreSQL."; return 1; }
+  else
+    case "$g" in
+      apt-get) comando="$SUDO apt-get install -y postgresql && $SUDO systemctl enable --now postgresql"; download="50 MB"; disco="250 MB" ;;
+      dnf) comando="$SUDO dnf install -y postgresql-server postgresql-contrib && $SUDO postgresql-setup --initdb && $SUDO systemctl enable --now postgresql"; download="30 MB"; disco="150 MB" ;;
+      pacman) comando="$SUDO pacman -S --noconfirm postgresql && $SUDO su - postgres -c 'initdb -D /var/lib/postgres/data' && $SUDO systemctl enable --now postgresql"; download="20 MB"; disco="100 MB" ;;
+      zypper) comando="$SUDO zypper install -y postgresql-server postgresql-contrib && $SUDO systemctl enable --now postgresql"; download="30 MB"; disco="150 MB" ;;
+      brew) comando="brew install postgresql@16 && brew services start postgresql@16"; download="60 MB"; disco="300 MB" ;;
+      *) log "Nenhum gerenciador de pacotes conhecido; instale o PostgreSQL manualmente (https://www.postgresql.org/download/)."; return 1 ;;
+    esac
+    oferecer_instalacao "PostgreSQL" \
+      "O banco de dados do projeto (cursos, usuários e progresso) é um PostgreSQL local; sem ele não há login nem cursos." \
+      "$download" "$disco" "https://www.postgresql.org/download/" "$comando" \
+      "O serviço será iniciado e o banco do projeto criado em seguida, automaticamente." || return 1
+  fi
+  log "Aguardando o PostgreSQL iniciar..."
+  aguardar_postgres || { erro "o PostgreSQL não respondeu a tempo."; return 1; }
+  log "Preparando o banco de dados PostgreSQL (nova tentativa)..."
+  DB_RC=0
+  "$PYTHON" "$BACK/src/db_init.py" || DB_RC=$?
+}
+
 # ---------- Encerramento limpo (inclui processos-filhos do npm/vite) ----------
 matar_arvore() {
   local pid="$1" filho
@@ -37,7 +178,10 @@ trap 'exit 143' TERM
 
 # ---------- 0. Pré-requisitos e arquivos locais ----------
 if ! command -v node >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
-  erro "Node.js/npm não encontrados no PATH. Instale o Node.js LTS (https://nodejs.org)."
+  oferecer_node || true
+fi
+if ! command -v node >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
+  erro "Node.js/npm não encontrados no PATH. Instale o Node.js LTS (https://nodejs.org) e abra um novo terminal."
   exit 1
 fi
 NODE_VERSAO="$(node -p 'process.versions.node')"
@@ -103,13 +247,18 @@ fi
 # A instalação do Python pode estar mutilada (stdlib sem venv/ensurepip/tempfile);
 # procura o primeiro interpretador 3.10+ com a stdlib íntegra.
 PY_TESTE='import sys, tempfile, venv, ensurepip; sys.exit(0 if sys.version_info >= (3, 10) else 1)'
-PYTHON_BIN=""
-for candidato in python3 python3.13 python3.12 python3.11 python3.10 python; do
-  if command -v "$candidato" >/dev/null 2>&1 && "$candidato" -c "$PY_TESTE" >/dev/null 2>&1; then
-    PYTHON_BIN="$(command -v "$candidato")"
-    break
-  fi
-done
+procurar_python() {
+  local candidato
+  PYTHON_BIN=""
+  for candidato in python3 python3.14 python3.13 python3.12 python3.11 python3.10 python; do
+    if command -v "$candidato" >/dev/null 2>&1 && "$candidato" -c "$PY_TESTE" >/dev/null 2>&1; then
+      PYTHON_BIN="$(command -v "$candidato")"
+      return 0
+    fi
+  done
+  return 1
+}
+procurar_python || { oferecer_python && procurar_python; } || true
 if [[ -z "$PYTHON_BIN" ]]; then
   erro "nenhum Python 3.10+ utilizável encontrado (versão antiga ou módulos venv/ensurepip ausentes)."
   log "Linux (Debian/Ubuntu): sudo apt install python3 python3-venv python3-pip"
@@ -141,7 +290,13 @@ log "Instalando/verificando dependências do backend (pip)..."
 # ---------- 3. Configuração local do backend (.env) e banco de dados ----------
 # (o db_init.py cria o backend/.env com SECRET_KEY gerada, se ele não existir)
 log "Preparando o banco de dados PostgreSQL..."
-if ! "$PYTHON" "$BACK/src/db_init.py"; then
+DB_RC=0
+"$PYTHON" "$BACK/src/db_init.py" || DB_RC=$?
+# Código 3 = PostgreSQL local ausente ou parado (ver SEM_SERVIDOR no db_init.py)
+if [[ "$DB_RC" == "3" ]]; then
+  tratar_sem_postgres || true
+fi
+if [[ "$DB_RC" != "0" ]]; then
   log "AVISO: banco indisponível. O frontend abre, mas login e cursos não funcionarão"
   log "       até o PostgreSQL ser configurado (veja as instruções acima)."
 fi

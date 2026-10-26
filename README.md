@@ -119,15 +119,32 @@ cd idade_digital
 
 ### O que o script faz automaticamente?
 
-1. Copia `backend/db/users_mock.json.example` para `backend/db/users_mock.json` (contas de teste) se o arquivo não existir.
-2. Instala o front-end (`npm install`) e repara dependências que faltem.
-3. Cria o ambiente virtual do back-end (`venv`) e instala as dependências com `pip`.
-4. Baixa a voz de leitura (Piper), cria o `backend/.env` e prepara o banco (veja “Banco de dados”).
-5. Inicia o **back-end** em `http://127.0.0.1:5000` e o **front-end** em `http://localhost:5173` simultaneamente.
+1. Confere o Node.js (o Vite 8 exige `^20.19` ou `>=22.12`).
+2. Copia `backend/db/users_mock.json.example` para `backend/db/users_mock.json` (contas de teste) se o arquivo não existir.
+3. Instala o front-end (`npm install`) e repara dependências que faltem.
+4. Procura um Python 3.10+ com a biblioteca padrão íntegra (`tempfile`, `venv`, `ensurepip`; no Windows, também pelo launcher `py`), cria o ambiente virtual do back-end (`venv`, recriado se estiver quebrado) e instala as dependências com `pip`.
+5. Baixa a voz de leitura (Piper), cria o `backend/.env` e prepara o banco (veja “Banco de dados”).
+6. Confere se as portas 5000 e 5173 estão livres e aguarda o back-end responder antes de abrir o front-end.
+7. Inicia o **back-end** em `http://127.0.0.1:5000` e o **front-end** em `http://localhost:5173` simultaneamente.
 
 Depois, abra **[http://localhost:5173](http://localhost:5173)** e faça login com uma credencial do `backend/db/users_mock.json`.
 
-> Para encerrar os dois servidores ao mesmo tempo, pressione **`Ctrl+C`** no terminal que executou o `./start.sh`.
+#### Faltou Node.js, Python ou PostgreSQL?
+
+Esses três são programas **externos** ao projeto (ficam instalados no computador, fora da pasta do projeto). Se algum faltar, o script explica qual é e para que serve, informa o espaço em disco e pergunta, com **uma tecla**, se deve instalar: **`s`** para sim, **`n`** para não.
+
+| Dependência | Download | Em disco | Observação |
+|---|---|---|---|
+| Node.js LTS | ~32 MB | ~100 MB | no Windows pede permissão de administrador (UAC) |
+| Python 3.14 | ~32 MB | ~165 MB | instalação só para o seu usuário |
+| PostgreSQL 16 | ~386 MB | ~250 MB (servidor e ferramentas) | o pgAdmin e o Stack Builder, opcionais no assistente, ocupam mais; no Windows o assistente abre e você define e **anota** a senha do usuário `postgres` (o script a pede uma vez para criar o banco e não a grava) |
+
+- **Windows:** usa o `winget`. **Linux/macOS:** usa o gerenciador de pacotes (`apt`, `dnf`, `pacman`, `zypper` ou Homebrew), com `sudo`; os valores no Linux/macOS são aproximados. No `apt`/`dnf` o Node.js vem do repositório NodeSource, porque o Node das distribuições costuma ser antigo demais para o Vite 8.
+- Se o PostgreSQL já estiver instalado mas **parado**, o script avisa e oferece iniciar o serviço.
+- Para responder sem tecla (automação), defina `INSTALAR_DEPENDENCIAS=s` ou `n`. Sem terminal interativo a resposta é `n`.
+- Quem recusa (`n`) continua como antes: o script mostra o link de instalação manual e, sem o PostgreSQL, o frontend abre mas login e cursos não funcionam.
+
+> Para encerrar os dois servidores ao mesmo tempo, pressione **`Ctrl+C`** no terminal que executou o `./start.sh`. No Windows, veja “Encerrar” mais abaixo.
 
 > 💡 **Prefere instalar tudo manualmente?** Siga os Passos 1–7 abaixo.
 
@@ -281,7 +298,17 @@ Depois, abra **[http://localhost:5173](http://localhost:5173)** e faça login co
 
 ### Encerrar
 
+#### 🐧 Linux / macOS
+
 Pressione **`Ctrl+C`** no terminal do `./start.sh` para encerrar **os dois servidores simultaneamente**.
+
+#### 🪟 Windows (CMD)
+
+No terminal do `start.bat`, pressione **`Ctrl+C`**: o CMD pergunta “Deseja finalizar o arquivo em lotes?”. Responda **`S`** para sair e **`N`** para continuar (o script reinicia o front-end).
+
+> O back-end do `start.bat` roda em segundo plano (`start /b`) e **ignora o `Ctrl+C`**. Ao responder `S`, ele pode continuar ativo na porta 5000. Não há problema: na próxima execução o `start.bat` encontra esse back-end (reconhecido pelo caminho do `app.py` do próprio projeto) e o encerra sozinho. Para encerrá-lo na hora, abra o PowerShell e rode `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*backend\src\app.py*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }`.
+>
+> Se o front-end falhar três vezes seguidas ao iniciar (por exemplo, porta 5173 ocupada ou dependência faltando), o `start.bat` desiste com uma mensagem de erro e encerra o back-end.
 
 ---
 
@@ -367,7 +394,7 @@ Os comandos de teste usam apenas o Python do próprio `venv` e funcionam em **Li
 3. Os testes de **leitura em voz** são ignorados automaticamente se a voz (Piper) não estiver instalada.
 4. O **teste de estresse** precisa do projeto rodando (`./start.sh` ou `start.bat` em outro terminal).
 
-### Back-end — testes automatizados (62 testes, ~10 s)
+### Back-end — testes automatizados (64 testes, ~1 min)
 
 Cobrem login e segurança, níveis de usuário, cursos e módulos, informações, uploads, equipe e voz. Rode de dentro da pasta `backend`:
 

@@ -1,0 +1,7 @@
+# Finais de linha por tipo de arquivo, independente do core.autocrlf de cada pessoa.
+# O CMD exige CRLF em .bat (com LF, labels e goto falham de forma intermitente);
+# o bash exige LF em .sh (com CRLF: "$'\r': command not found").
+* text=auto
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.sh text eol=lf

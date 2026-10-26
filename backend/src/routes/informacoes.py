@@ -75,17 +75,30 @@ def criar():
     except ErroValidacao as erro:
         return {"erro": str(erro)}, 400
     with getConexao() as conexao:
-        if conexao.execute(
-            "SELECT 1 FROM informacoes WHERE nome = %s", (campos[0],)
-        ).fetchone():
-            return {"erro": "Já existe uma informação com esse nome."}, 409
-        novo = conexao.execute(
-            "INSERT INTO informacoes (nome, descricao, conteudo, imagem, video_url, "
-            "artigo_url, artigo_fonte, artigo_titulo, artigo_resumo) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
-            campos,
+        existente = conexao.execute(
+            "SELECT id, ativo, imagem FROM informacoes WHERE nome = %s", (campos[0],)
         ).fetchone()
-    return {"id": novo["id"], "mensagem": "Informação criada com sucesso."}, 201
+        if existente and existente["ativo"]:
+            return {"erro": "Já existe uma informação com esse nome."}, 409
+        if existente:
+            # A exclusão é lógica e o nome é único no banco: o título volta a valer na mesma linha
+            conexao.execute(
+                "UPDATE informacoes SET descricao = %s, conteudo = %s, imagem = %s, "
+                "video_url = %s, artigo_url = %s, artigo_fonte = %s, artigo_titulo = %s, "
+                "artigo_resumo = %s, ativo = TRUE WHERE id = %s",
+                (*campos[1:], existente["id"]),
+            )
+            novo_id = existente["id"]
+        else:
+            novo_id = conexao.execute(
+                "INSERT INTO informacoes (nome, descricao, conteudo, imagem, video_url, "
+                "artigo_url, artigo_fonte, artigo_titulo, artigo_resumo) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+                campos,
+            ).fetchone()["id"]
+    if existente and existente["imagem"] != campos[3]:
+        uploads.remover_upload(existente["imagem"])
+    return {"id": novo_id, "mensagem": "Informação criada com sucesso."}, 201
 
 
 @bp.put("/<int:info_id>")

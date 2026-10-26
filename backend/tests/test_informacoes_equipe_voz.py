@@ -90,6 +90,27 @@ class Informacoes(Base):
         self.assertEqual(self.chamar("POST", "/informacoes", corpo, "admin")[0], 201)
         self.assertEqual(self.chamar("POST", "/informacoes", corpo, "admin")[0], 409)
 
+    def test_recriar_titulo_de_informacao_excluida(self):
+        capa = self.enviar_imagem(png())[1]["url"]
+        corpo = self.corpo(imagem=capa)
+        iid = self.chamar("POST", "/informacoes", corpo, "admin")[1]["id"]
+        self.assertEqual(
+            self.chamar("DELETE", f"/informacoes/{iid}", papel="admin")[0], 200
+        )
+        novo = {**corpo, "descricao": "Resumo novo", "imagem": ""}
+        status, dados = self.chamar("POST", "/informacoes", novo, "admin")
+        self.assertEqual(
+            status, 201, "o título de uma informação excluída pode ser reutilizado"
+        )
+        lido = self.chamar("GET", f"/informacoes/{dados['id']}", papel="usuario")[1]
+        self.assertEqual((lido["descricao"], lido["imagem"]), ("Resumo novo", None))
+        self.assertEqual(
+            self.cli.get(capa).status_code,
+            404,
+            "a capa antiga deve ser apagada do disco",
+        )
+        self.assertEqual(self.chamar("POST", "/informacoes", novo, "admin")[0], 409)
+
     def test_busca_ignora_acentos_e_caixa(self):
         marca = sufixo()
         self.chamar(
@@ -201,6 +222,24 @@ class Equipe(Base):
                     404,
                 )
 
+    def test_recriar_cadastro_excluido(self):
+        corpo = self.corpo()
+        antigo = self.chamar("POST", "/equipe", corpo, "admin")[1]["id"]
+        self.assertEqual(
+            self.chamar("DELETE", f"/equipe/{antigo}", papel="admin")[0], 200
+        )
+        status, dados = self.chamar(
+            "POST", "/equipe", {**corpo, "funcao": "Nova função"}, "admin"
+        )
+        self.assertEqual(
+            status, 201, "o nome de um cadastro removido pode ser reutilizado"
+        )
+        self.assertEqual(dados["id"], antigo)
+        equipe = self.chamar("GET", "/equipe", papel="usuario")[1]["integrantes"]
+        achados = [p for p in equipe if p["nome"] == corpo["nome"]]
+        self.assertEqual([p["funcao"] for p in achados], ["Nova função"])
+        self.assertEqual(self.chamar("POST", "/equipe", corpo, "admin")[0], 409)
+
     def test_github_aceita_link_arroba_ou_usuario_e_gera_foto(self):
         for entrada in (
             "https://github.com/octocat",
@@ -257,7 +296,7 @@ class Voz(Base):
     def setUp(self):
         status, dados = self.chamar("GET", "/voz/vozes", papel="usuario")
         if not dados.get("disponivel"):
-            self.skipTest("Piper/modelo de voz não instalado (rode o start.sh).")
+            self.skipTest("Piper/modelo de voz não instalado (rode o start.sh/start.bat).")
         self.vozes = [v["id"] for v in dados["vozes"]]
 
     def duracao(self, wav):
