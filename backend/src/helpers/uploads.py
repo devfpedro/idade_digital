@@ -1,3 +1,4 @@
+import logging
 import re
 
 import config
@@ -23,4 +24,9 @@ def remover_upload(caminho):
         return
     nome = caminho.rsplit("/", 1)[-1]
     if NOME_VALIDO.match(nome):
-        (PASTA / nome).unlink(missing_ok=True)
+        try:
+            (PASTA / nome).unlink(missing_ok=True)
+        except OSError as erro:
+            # No Windows o arquivo pode estar aberto (sendo baixado ou em varredura); a
+            # linha do banco já mudou, então o arquivo órfão é preferível a um erro 500.
+            logging.getLogger(__name__).warning("Upload %s não removido: %s", nome, erro)

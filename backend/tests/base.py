@@ -73,7 +73,7 @@ class Base(unittest.TestCase):
             )
             if resposta.status_code != 200:
                 raise unittest.SkipTest(
-                    f"Não foi possível entrar como {papel} ({email}): rode o start.sh antes."
+                    f"Não foi possível entrar como {papel} ({email}): rode o start.sh/start.bat antes."
                 )
             cls.token[papel] = resposta.get_json()["token"]
             cls.dados[papel] = resposta.get_json()["usuario"]

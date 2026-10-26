@@ -156,9 +156,9 @@ class Seguranca(Base):
     def test_upload_servido_com_nosniff_e_sem_traversal(self):
         status, dados = self.enviar_imagem(png())
         self.assertEqual(status, 201)
-        resposta = self.cli.get(dados["url"])
-        self.assertEqual(resposta.headers["X-Content-Type-Options"], "nosniff")
-        self.assertEqual(resposta.mimetype, "image/png")
+        with self.cli.get(dados["url"]) as resposta:  # fechar solta o arquivo (Windows)
+            self.assertEqual(resposta.headers["X-Content-Type-Options"], "nosniff")
+            self.assertEqual(resposta.mimetype, "image/png")
         for caminho in (
             "/uploads/..%2f..%2fapp.py",
             "/uploads/app.py",

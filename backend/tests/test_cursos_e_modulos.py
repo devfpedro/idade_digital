@@ -95,7 +95,8 @@ class CursosEModulos(Base):
             f"/cursos/{cid}/modulos/1/conteudos/{conteudo}/concluir",
             papel="usuario",
         )
-        self.assertEqual(self.cli.get(up["url"]).status_code, 200)
+        with self.cli.get(up["url"]) as resposta:  # fechar solta o arquivo (Windows)
+            self.assertEqual(resposta.status_code, 200)
         self.assertEqual(self.chamar("DELETE", f"/cursos/{cid}", papel="admin")[0], 200)
         self.assertEqual(self.cli.get(up["url"]).status_code, 404)
 

@@ -88,18 +88,30 @@ def criar():
     except ErroValidacao as erro:
         return {"erro": str(erro)}, 400
     with getConexao() as conexao:
-        if conexao.execute(
-            "SELECT 1 FROM colaboradores WHERE categoria = %s AND nome = %s", campos[:2]
-        ).fetchone():
-            return {"erro": "Já existe um cadastro com esse nome nessa categoria."}, 409
-        novo = conexao.execute(
-            "INSERT INTO colaboradores (categoria, nome, funcao, descricao, github, ordem) "
-            "VALUES (%s, %s, %s, %s, %s, "
-            "(SELECT COALESCE(MAX(ordem), 0) + 1 FROM colaboradores WHERE categoria = %s)) "
-            "RETURNING id",
-            (*campos, campos[0]),
+        existente = conexao.execute(
+            "SELECT id, ativo FROM colaboradores WHERE categoria = %s AND nome = %s",
+            campos[:2],
         ).fetchone()
-    return {"id": novo["id"], "mensagem": "Cadastro criado com sucesso."}, 201
+        if existente and existente["ativo"]:
+            return {"erro": "Já existe um cadastro com esse nome nessa categoria."}, 409
+        proxima_ordem = (
+            "(SELECT COALESCE(MAX(ordem), 0) + 1 FROM colaboradores WHERE categoria = %s)"
+        )
+        if existente:
+            # A remoção é lógica (o seed não recria quem foi removido): o cadastro volta na mesma linha
+            conexao.execute(
+                "UPDATE colaboradores SET funcao = %s, descricao = %s, github = %s, "
+                f"ordem = {proxima_ordem}, ativo = TRUE WHERE id = %s",
+                (*campos[2:], campos[0], existente["id"]),
+            )
+            novo_id = existente["id"]
+        else:
+            novo_id = conexao.execute(
+                "INSERT INTO colaboradores (categoria, nome, funcao, descricao, github, ordem) "
+                f"VALUES (%s, %s, %s, %s, %s, {proxima_ordem}) RETURNING id",
+                (*campos, campos[0]),
+            ).fetchone()["id"]
+    return {"id": novo_id, "mensagem": "Cadastro criado com sucesso."}, 201
 
 
 @bp.put("/<int:colaborador_id>")

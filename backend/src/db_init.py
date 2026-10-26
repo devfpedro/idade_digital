@@ -23,9 +23,11 @@ import psycopg  # noqa: E402
 from werkzeug.security import check_password_hash, generate_password_hash  # noqa: E402
 
 import config  # noqa: E402
-from db_provisionar import provisionar  # noqa: E402
+from db_provisionar import HOSTS_LOCAIS, provisionar  # noqa: E402
 from helpers.database import getConexao  # noqa: E402
 
+# Código de saída lido pelo start.sh/start.bat: PostgreSQL local ausente ou parado
+SEM_SERVIDOR = 3
 RAIZ = config.RAIZ_BACKEND.parent
 ARQUIVOS_USUARIOS = [
     RAIZ / "backend" / "db" / "users_mock.json",
@@ -80,21 +82,18 @@ def servidor_responde():
 
 def garantir_banco_acessivel():
     garantir_senha_banco()
+    if not servidor_responde():
+        print(
+            f"[db] ERRO: o PostgreSQL não está respondendo em {config.DB_HOST}:{config.DB_PORT}.",
+            file=sys.stderr,
+        )
+        print(dicas_instalacao(), file=sys.stderr)
+        return SEM_SERVIDOR if config.DB_HOST in HOSTS_LOCAIS else 1
     try:
         getConexao().close()
         return 0
-    except psycopg.OperationalError as erro:
-        # Servidor no ar mas conexão recusada = usuário/senha/banco ainda não existem
-        if not servidor_responde():
-            print(
-                f"[db] ERRO: sem conexão com o PostgreSQL em {config.DB_HOST}:{config.DB_PORT}.",
-                file=sys.stderr,
-            )
-            print(
-                f"[db] Detalhe: {str(erro).strip().splitlines()[-1]}", file=sys.stderr
-            )
-            print(dicas_instalacao(), file=sys.stderr)
-            return 1
+    except psycopg.OperationalError:
+        pass  # Servidor no ar mas conexão recusada = usuário/senha/banco ainda não existem
 
     if not provisionar():
         print(
@@ -171,8 +170,9 @@ def sincronizar_usuarios(conexao):
 
 
 def main():
-    if garantir_banco_acessivel() != 0:
-        return 1
+    resultado = garantir_banco_acessivel()
+    if resultado != 0:
+        return resultado
     try:
         with getConexao() as conexao:
             executar_sql(conexao, "schema.sql")
